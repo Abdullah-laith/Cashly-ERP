@@ -110,7 +110,7 @@ export default function DashboardPage() {
               />
               <Tooltip
                 cursor={{fill: '#1E293B'}}
-                formatter={(value: number) => [`${value.toLocaleString()} د.ع`, 'المبيعات']}
+                formatter={(value: any) => [`${Number(value).toLocaleString()} د.ع`, 'المبيعات']}
                 contentStyle={{backgroundColor: '#0F172A', border: '1px solid #334155'}}
               />
               <Bar dataKey="val" fill="#10B981" radius={[4, 4, 0, 0]} />

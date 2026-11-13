@@ -13,8 +13,8 @@ function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
 }
 
-function DropdownMenuTrigger({ asChild, ...props }: MenuPrimitive.Trigger.Props) {
-  // Pass asChild to the underlying primitive, do not pass to the DOM element
+function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
+  // Pass to the underlying primitive, do not pass asChild to the DOM element
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
 }
 

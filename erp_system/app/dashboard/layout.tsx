@@ -63,7 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
           </div>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger>
               <Avatar className="cursor-pointer border border-slate-600">
                 <AvatarImage src="/avatar.png" />
                 <AvatarFallback className="bg-slate-700">أ</AvatarFallback>
