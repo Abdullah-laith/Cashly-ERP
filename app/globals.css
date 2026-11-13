@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #0F172A;
+    --sidebar: #0B1120;
+    --card: #1E293B;
+    --foreground: #F8FAFC;
+    --accent: #FF6B5B;
+    --success: #10B981;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
