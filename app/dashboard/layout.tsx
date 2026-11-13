@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen bg-[#0F172A] text-white">
       {/* القائمة الجانبية */}
       <aside className="w-64 border-l border-slate-700/60 bg-[#0B1120] hidden md:flex flex-col">
-        <div className="p-6 text-xl font-bold text-[#FF6B5B]">نظام ERP</div>
+        <div className="p-6 text-xl font-bold text-[#FF6B5B]">كاشلي | Cashly</div>
         <Sidebar settings={settings} />
       </aside>
 
