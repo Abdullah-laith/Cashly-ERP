@@ -60,29 +60,23 @@ export default function SalesHistoryPage() {
 
   const deleteInvoice = async (id: string) => {
     try {
-      // 1. حذف عناصر الفاتورة المرتبطة أولاً لتجنب مشاكل Foreign Key
-      const { error: itemsError } = await supabase
-        .from('invoice_items') // تأكد من اسم الجدول الخاص بالعناصر، قد يكون sale_items
-        .delete()
-        .eq('invoice_id', id);
-
-      // 2. حذف الفاتورة نفسها
       const { error } = await supabase
         .from('invoices')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
-
-      showToast('تم حذف الفاتورة بنجاح');
-      // تحديث الحالة محلياً فوراً
-      setInvoices(prev => prev.filter(inv => inv.id !== id));
-      // إطلاق حدث لتنبيه باقي أجزاء النظام
-      window.dispatchEvent(new Event('invoiceDeleted'));
-      setConfirmDelete(null);
+      if (error) {
+        // إذا فشل الحذف، نظهر الخطأ للمستخدم
+        showToast(`خطأ في الحذف: ${error.message}`);
+        console.error('Delete error:', error);
+      } else {
+        showToast('تم حذف الفاتورة بنجاح');
+        setInvoices(prev => prev.filter(inv => inv.id !== id));
+        window.dispatchEvent(new Event('invoiceDeleted'));
+        setConfirmDelete(null);
+      }
     } catch (err: any) {
-      console.error('Error deleting invoice:', err);
-      showToast('خطأ في الحذف: ' + (err.message || 'فشل الاتصال بقاعدة البيانات'));
+      showToast('حدث خطأ غير متوقع');
     }
   };
 
