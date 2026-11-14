@@ -9,12 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast-provider';
 import { Badge } from '@/components/ui/badge';
-  const changeMonth = (offset: number) => {
-    const newDate = new Date(selectedMonth);
-    newDate.setMonth(newDate.getMonth() + offset);
-    setSelectedMonth(newDate);
-  };
-
 
 interface Product {
   name: string;
@@ -38,6 +32,7 @@ export default function SalesHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
 
   const fetchInvoices = async () => {
     setLoading(true);
