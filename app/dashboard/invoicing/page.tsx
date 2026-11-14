@@ -66,7 +66,7 @@ export default function InvoicingPage() {
     try {
       const { data: invoice, error } = await supabase.from('invoices').insert([{
         total_amount: finalTotal, customer_name: customerName, customer_phone: customerPhone,
-        payment_type: paymentType, remaining_debt: debt, discount: discount
+        payment_type: paymentType, remaining_debt: debt
       }]).select().single();
 
       if (error) throw error;
