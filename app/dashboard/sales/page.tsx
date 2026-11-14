@@ -112,8 +112,9 @@ export default function SalesHistoryPage() {
         <h1 className="text-3xl font-bold">سجل المبيعات</h1>
         <div className="flex items-center gap-2">
            <Button variant="outline" onClick={() => changeMonth(-1)}><ChevronLeft className="w-4 h-4"/></Button>
-           <span className="font-bold">{selectedMonth ? selectedMonth.toLocaleString('ar-IQ', { month: 'long', year: 'numeric' }) : '...'}</span>
+           <span className="font-bold">{selectedMonth ? `${selectedMonth.getFullYear()}/${(selectedMonth.getMonth() + 1).toString().padStart(2, '0')}` : '...'}</span>
            <Button variant="outline" onClick={() => changeMonth(1)}><ChevronRight className="w-4 h-4"/></Button>
+           <Button variant="outline" onClick={() => setSelectedMonth(null as any)}>عرض الكل</Button>
            <Button variant="outline" onClick={exportToCSV}><Download className="w-4 h-4" /></Button>
         </div>
         <div className="relative w-64">
@@ -128,38 +129,37 @@ export default function SalesHistoryPage() {
         </div>
       </div>
 
-      <Card className="bg-[#1E293B] border-slate-700 shadow-xl">
-        <CardHeader><CardTitle className="text-slate-200">الفواتير المسجلة</CardTitle></CardHeader>
-        <CardContent>
+      <Card className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <CardContent className="p-0">
           {loading ? (
             <p className="text-center py-10 text-slate-400">جاري التحميل...</p>
           ) : (
-            <Table>
+            <Table className="table-fixed w-full">
               <TableHeader>
-                <TableRow className="border-slate-700 hover:bg-transparent">
-                  <TableHead className="text-slate-400">التاريخ</TableHead>
-                  <TableHead className="text-slate-400">العميل</TableHead>
-                  <TableHead className="text-slate-400">المنتجات</TableHead>
-                  <TableHead className="text-slate-400">رقم الهاتف</TableHead>
-                  <TableHead className="text-right text-slate-400">الإجمالي</TableHead>
-                  <TableHead className="text-center text-slate-400">إجراءات</TableHead>
+                <TableRow className="border-slate-800 hover:bg-transparent">
+                  <TableHead className="text-right px-4 py-3.5 text-slate-400">التاريخ</TableHead>
+                  <TableHead className="text-right px-4 py-3.5 text-slate-400">العميل</TableHead>
+                  <TableHead className="text-right px-4 py-3.5 text-slate-400">المنتجات</TableHead>
+                  <TableHead className="text-right px-4 py-3.5 text-slate-400">رقم الهاتف</TableHead>
+                  <TableHead className="text-right px-4 py-3.5 text-slate-400">الإجمالي</TableHead>
+                  <TableHead className="text-right px-4 py-3.5 text-slate-400">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInvoices.map((inv) => (
-                  <TableRow key={inv.id} className="border-slate-700/50 hover:bg-slate-800/50">
-                    <TableCell className="text-sm">{new Date(inv.created_at).toLocaleDateString('ar-IQ')}</TableCell>
-                    <TableCell className="font-medium">{inv.customer_name}</TableCell>
-                    <TableCell>
+                  <TableRow key={inv.id} className="border-slate-800 hover:bg-slate-800/50">
+                    <TableCell className="text-right px-4 py-3.5 text-sm">{new Date(inv.created_at).toISOString().split('T')[0].replace(/-/g, '/')}</TableCell>
+                    <TableCell className="text-right px-4 py-3.5 font-medium">{inv.customer_name}</TableCell>
+                    <TableCell className="text-right px-4 py-3.5">
                       <div className="flex flex-wrap gap-1">
-                        {Array.isArray(inv.items) && inv.items.map((item, idx) => (
-                           <Badge key={idx} variant="secondary" className="text-xs">{item.name} x{item.quantity}</Badge>
-                        ))}
+                        {Array.isArray(inv.items) && inv.items.length > 0 ? inv.items.map((item, idx) => (
+                           <Badge key={idx} variant="secondary" className="text-xs">{item.name} ×{item.quantity}</Badge>
+                        )) : <span className="text-xs text-slate-500 italic">مبيعات عامة</span>}
                       </div>
                     </TableCell>
-                    <TableCell className="text-slate-400">{inv.customer_phone || '-'}</TableCell>
-                    <TableCell className="text-right font-bold text-[#10B981]">{Number(inv.total_amount).toLocaleString()} د.ع</TableCell>
-                    <TableCell className="text-center flex gap-2 justify-center">
+                    <TableCell className="text-right px-4 py-3.5 text-slate-400">{inv.customer_phone || '-'}</TableCell>
+                    <TableCell className="text-right px-4 py-3.5 font-bold text-[#10B981]">{Number(inv.total_amount).toLocaleString()} د.ع</TableCell>
+                    <TableCell className="text-right px-4 py-3.5 flex gap-2">
                       <Button variant="ghost" size="sm" onClick={() => window.print()} className="text-blue-400">
                         <Printer className="w-4 h-4" />
                       </Button>
