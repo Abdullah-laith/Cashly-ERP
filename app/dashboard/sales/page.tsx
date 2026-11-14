@@ -69,8 +69,6 @@ export default function SalesHistoryPage() {
     }
   };
 
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
-
   const filteredInvoices = useMemo(() => {
     return invoices.filter(inv => {
       const invDate = new Date(inv.created_at);
