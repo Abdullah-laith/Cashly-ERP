@@ -2,14 +2,19 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Search, ChevronLeft, ChevronRight, Download, Eye, FileText, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast-provider';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+  const changeMonth = (offset: number) => {
+    const newDate = new Date(selectedMonth);
+    newDate.setMonth(newDate.getMonth() + offset);
+    setSelectedMonth(newDate);
+  };
+
 
 interface Product {
   name: string;
@@ -81,6 +86,12 @@ export default function SalesHistoryPage() {
       return matchesSearch && matchesMonth;
     });
   }, [invoices, searchTerm, selectedMonth]);
+
+  const changeMonth = (offset: number) => {
+    const newDate = new Date(selectedMonth);
+    newDate.setMonth(newDate.getMonth() + offset);
+    setSelectedMonth(newDate);
+  };
 
   const exportToCSV = () => {
     const csvContent = "data:text/csv;charset=utf-8," +
