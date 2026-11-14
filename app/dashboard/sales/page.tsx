@@ -1,13 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Search } from 'lucide-react';
+import { Trash2, Search, ChevronLeft, ChevronRight, Download, Eye, FileText, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast-provider';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
+interface Product {
+  name: string;
+  quantity: number;
+}
 
 interface Invoice {
   id: string;
@@ -16,6 +23,8 @@ interface Invoice {
   total_amount: number;
   created_at: string;
   deleted_at: string | null;
+  payment_type: 'نقدي' | 'آجل';
+  items: Product[];
 }
 
 export default function SalesHistoryPage() {
@@ -60,16 +69,45 @@ export default function SalesHistoryPage() {
     }
   };
 
-  const filteredInvoices = invoices.filter(inv =>
-    inv.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (inv.customer_phone?.includes(searchTerm))
-  );
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter(inv => {
+      const invDate = new Date(inv.created_at);
+      const matchesSearch = inv.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (inv.customer_phone?.includes(searchTerm));
+      const matchesMonth = invDate.getMonth() === selectedMonth.getMonth() &&
+                           invDate.getFullYear() === selectedMonth.getFullYear();
+      return matchesSearch && matchesMonth;
+    });
+  }, [invoices, searchTerm, selectedMonth]);
+
+  const exportToCSV = () => {
+    const csvContent = "data:text/csv;charset=utf-8," +
+      ["التاريخ,العميل,الإجمالي"].concat(filteredInvoices.map(inv =>
+        `${inv.created_at},${inv.customer_name},${inv.total_amount}`
+      )).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "sales_report.csv");
+    document.body.appendChild(link);
+    link.click();
+  };
+
 
   return (
     <div className="p-8 space-y-6 bg-[#0F172A] min-h-screen text-slate-100">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">سجل المبيعات</h1>
+        <div className="flex items-center gap-2">
+           <Button variant="outline" onClick={() => changeMonth(-1)}><ChevronLeft className="w-4 h-4"/></Button>
+           <span className="font-bold">{selectedMonth.toLocaleString('ar-IQ', { month: 'long', year: 'numeric' })}</span>
+           <Button variant="outline" onClick={() => changeMonth(1)}><ChevronRight className="w-4 h-4"/></Button>
+           <Button variant="outline" onClick={exportToCSV}><Download className="w-4 h-4" /></Button>
+        </div>
         <div className="relative w-64">
+
           <Search className="absolute right-3 top-3 w-4 h-4 text-slate-400" />
           <Input
             placeholder="بحث عن عميل أو هاتف..."
@@ -91,6 +129,7 @@ export default function SalesHistoryPage() {
                 <TableRow className="border-slate-700 hover:bg-transparent">
                   <TableHead className="text-slate-400">التاريخ</TableHead>
                   <TableHead className="text-slate-400">العميل</TableHead>
+                  <TableHead className="text-slate-400">المنتجات</TableHead>
                   <TableHead className="text-slate-400">رقم الهاتف</TableHead>
                   <TableHead className="text-right text-slate-400">الإجمالي</TableHead>
                   <TableHead className="text-center text-slate-400">إجراءات</TableHead>
@@ -101,9 +140,19 @@ export default function SalesHistoryPage() {
                   <TableRow key={inv.id} className="border-slate-700/50 hover:bg-slate-800/50">
                     <TableCell className="text-sm">{new Date(inv.created_at).toLocaleDateString('ar-IQ')}</TableCell>
                     <TableCell className="font-medium">{inv.customer_name}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {inv.items.map((item, idx) => (
+                           <Badge key={idx} variant="secondary" className="text-xs">{item.name} x{item.quantity}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-slate-400">{inv.customer_phone || '-'}</TableCell>
                     <TableCell className="text-right font-bold text-[#10B981]">{Number(inv.total_amount).toLocaleString()} د.ع</TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center flex gap-2 justify-center">
+                      <Button variant="ghost" size="sm" onClick={() => window.print()} className="text-blue-400">
+                        <Printer className="w-4 h-4" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(inv.id)} className="text-red-400 hover:text-red-300">
                         <Trash2 className="w-4 h-4" />
                       </Button>
