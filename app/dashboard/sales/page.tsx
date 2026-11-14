@@ -60,12 +60,11 @@ export default function SalesHistoryPage() {
 
   const deleteInvoice = async (id: string) => {
     try {
-      // نستخدم التحديث (Soft Delete) لأن جدول الفواتير غالباً ما يكون كذلك في هذا النظام
-      const { data, error } = await supabase
+      // بما أن لدينا ON DELETE CASCADE، حذف الفاتورة يكفي
+      const { error } = await supabase
         .from('invoices')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id)
-        .select();
+        .delete()
+        .eq('id', id);
 
       if (error) throw error;
 
