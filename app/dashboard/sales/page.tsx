@@ -32,7 +32,11 @@ export default function SalesHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setSelectedMonth(new Date());
+  }, []);
 
   const fetchInvoices = async () => {
     setLoading(true);
@@ -70,6 +74,7 @@ export default function SalesHistoryPage() {
   };
 
   const filteredInvoices = useMemo(() => {
+    if (!selectedMonth) return invoices;
     return invoices.filter(inv => {
       const invDate = new Date(inv.created_at);
       const matchesSearch = inv.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,6 +86,7 @@ export default function SalesHistoryPage() {
   }, [invoices, searchTerm, selectedMonth]);
 
   const changeMonth = (offset: number) => {
+    if (!selectedMonth) return;
     const newDate = new Date(selectedMonth);
     newDate.setMonth(newDate.getMonth() + offset);
     setSelectedMonth(newDate);
@@ -106,7 +112,7 @@ export default function SalesHistoryPage() {
         <h1 className="text-3xl font-bold">سجل المبيعات</h1>
         <div className="flex items-center gap-2">
            <Button variant="outline" onClick={() => changeMonth(-1)}><ChevronLeft className="w-4 h-4"/></Button>
-           <span className="font-bold">{selectedMonth.toLocaleString('ar-IQ', { month: 'long', year: 'numeric' })}</span>
+           <span className="font-bold">{selectedMonth ? selectedMonth.toLocaleString('ar-IQ', { month: 'long', year: 'numeric' }) : '...'}</span>
            <Button variant="outline" onClick={() => changeMonth(1)}><ChevronRight className="w-4 h-4"/></Button>
            <Button variant="outline" onClick={exportToCSV}><Download className="w-4 h-4" /></Button>
         </div>
