@@ -60,21 +60,23 @@ export default function SalesHistoryPage() {
 
   const deleteInvoice = async (id: string) => {
     try {
-      // بما أن لدينا ON DELETE CASCADE، حذف الفاتورة يكفي
-      const { error } = await supabase
+      const response = await supabase
         .from('invoices')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
-
-      showToast('تم حذف الفاتورة بنجاح');
-      setInvoices(prev => prev.filter(inv => inv.id !== id));
-      window.dispatchEvent(new Event('invoiceDeleted'));
-      setConfirmDelete(null);
+      if (response.error) {
+        console.error('Supabase Error:', response.error);
+        showToast(`خطأ ${response.error.code}: ${response.error.message}`);
+      } else {
+        showToast('تم حذف الفاتورة بنجاح');
+        setInvoices(prev => prev.filter(inv => inv.id !== id));
+        window.dispatchEvent(new Event('invoiceDeleted'));
+        setConfirmDelete(null);
+      }
     } catch (err: any) {
-      console.error('Delete error:', err);
-      showToast(`فشل الحذف: ${err.message}`);
+      console.error('Catch Error:', err);
+      showToast('حدث خطأ غير متوقع، راجع Console المتصفح');
     }
   };
 
