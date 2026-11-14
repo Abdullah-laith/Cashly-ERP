@@ -64,17 +64,16 @@ export default function SalesHistoryPage() {
         .rpc('delete_invoice_with_items', { invoice_id_param: id });
 
       if (response.error) {
-        console.error('RPC Error:', response.error);
-        showToast(`خطأ: ${response.error.message}`);
+        showToast(`فشل الحذف: ${response.error.message}`);
       } else {
-        showToast('تم حذف الفاتورة بنجاح');
-        // تحديث الـ State فوراً ليختفي الصف من الجدول
+        showToast('تم حذف الفاتورة');
         setInvoices(prev => prev.filter(inv => inv.id !== id));
+        // تحديث إضافي من القاعدة للتأكد
+        await fetchInvoices();
         setConfirmDelete(null);
       }
     } catch (err: any) {
-      console.error('Catch Error:', err);
-      showToast('حدث خطأ غير متوقع');
+      showToast('خطأ في الاتصال');
     }
   };
 
