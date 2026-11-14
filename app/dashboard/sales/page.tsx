@@ -152,7 +152,7 @@ export default function SalesHistoryPage() {
                     <TableCell className="font-medium">{inv.customer_name}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {inv.items.map((item, idx) => (
+                        {Array.isArray(inv.items) && inv.items.map((item, idx) => (
                            <Badge key={idx} variant="secondary" className="text-xs">{item.name} x{item.quantity}</Badge>
                         ))}
                       </div>
