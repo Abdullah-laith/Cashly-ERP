@@ -60,19 +60,16 @@ export default function SalesHistoryPage() {
 
   const deleteInvoice = async (id: string) => {
     try {
-      console.log('Attempting to delete invoice with ID:', id);
       const response = await supabase
         .rpc('delete_invoice_with_items', { invoice_id_param: id });
 
-      console.log('RPC Response:', response);
-
       if (response.error) {
         console.error('RPC Error:', response.error);
-        showToast(`خطأ RPC: ${response.error.message}`);
+        showToast(`خطأ: ${response.error.message}`);
       } else {
         showToast('تم حذف الفاتورة بنجاح');
+        // تحديث الـ State فوراً ليختفي الصف من الجدول
         setInvoices(prev => prev.filter(inv => inv.id !== id));
-        window.dispatchEvent(new Event('invoiceDeleted'));
         setConfirmDelete(null);
       }
     } catch (err: any) {
