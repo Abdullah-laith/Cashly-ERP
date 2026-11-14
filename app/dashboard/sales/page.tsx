@@ -59,17 +59,28 @@ export default function SalesHistoryPage() {
   }, []);
 
   const deleteInvoice = async (id: string) => {
-    const { error } = await supabase
-      .from('invoices')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id);
+    try {
+      // 1. حذف عناصر الفاتورة المرتبطة أولاً لتجنب مشاكل Foreign Key
+      const { error: itemsError } = await supabase
+        .from('invoice_items') // تأكد من اسم الجدول الخاص بالعناصر، قد يكون sale_items
+        .delete()
+        .eq('invoice_id', id);
 
-    if (!error) {
+      // 2. حذف الفاتورة نفسها
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
       showToast('تم حذف الفاتورة بنجاح');
-      fetchInvoices();
+      // تحديث الحالة محلياً فوراً
+      setInvoices(prev => prev.filter(inv => inv.id !== id));
       setConfirmDelete(null);
-    } else {
-      showToast('خطأ في الحذف: ' + error.message);
+    } catch (err: any) {
+      console.error('Error deleting invoice:', err);
+      showToast('خطأ في الحذف: ' + (err.message || 'فشل الاتصال بقاعدة البيانات'));
     }
   };
 
