@@ -60,23 +60,22 @@ export default function SalesHistoryPage() {
 
   const deleteInvoice = async (id: string) => {
     try {
-      const response = await supabase
-        .from('invoices')
-        .delete()
-        .eq('id', id);
+      // استدعاء الوظيفة التي أنشأناها في Supabase
+      const { error } = await supabase
+        .rpc('delete_invoice_with_items', { invoice_id_param: id });
 
-      if (response.error) {
-        console.error('Supabase Error:', response.error);
-        showToast(`خطأ ${response.error.code}: ${response.error.message}`);
+      if (error) {
+        console.error('RPC Delete error:', error);
+        showToast(`فشل الحذف: ${error.message}`);
       } else {
-        showToast('تم حذف الفاتورة بنجاح');
+        showToast('تم حذف الفاتورة وعناصرها بنجاح');
         setInvoices(prev => prev.filter(inv => inv.id !== id));
         window.dispatchEvent(new Event('invoiceDeleted'));
         setConfirmDelete(null);
       }
     } catch (err: any) {
       console.error('Catch Error:', err);
-      showToast('حدث خطأ غير متوقع، راجع Console المتصفح');
+      showToast('حدث خطأ غير متوقع أثناء الحذف');
     }
   };
 
