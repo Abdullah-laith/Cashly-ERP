@@ -61,7 +61,12 @@ export default function DashboardPage() {
       setRecentTransactions(recent);
       setLoading(false);
     };
+
     fetchData();
+
+    // الاستماع لحدث حذف فاتورة
+    window.addEventListener('invoiceDeleted', fetchData);
+    return () => window.removeEventListener('invoiceDeleted', fetchData);
   }, []);
 
   const kpiCards = [
