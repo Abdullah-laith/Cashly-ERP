@@ -77,6 +77,8 @@ export default function SalesHistoryPage() {
       showToast('تم حذف الفاتورة بنجاح');
       // تحديث الحالة محلياً فوراً
       setInvoices(prev => prev.filter(inv => inv.id !== id));
+      // إطلاق حدث لتنبيه باقي أجزاء النظام
+      window.dispatchEvent(new Event('invoiceDeleted'));
       setConfirmDelete(null);
     } catch (err: any) {
       console.error('Error deleting invoice:', err);
