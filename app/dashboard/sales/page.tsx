@@ -60,23 +60,22 @@ export default function SalesHistoryPage() {
 
   const deleteInvoice = async (id: string) => {
     try {
-      const { error } = await supabase
+      // نستخدم التحديث (Soft Delete) لأن جدول الفواتير غالباً ما يكون كذلك في هذا النظام
+      const { data, error } = await supabase
         .from('invoices')
-        .delete()
-        .eq('id', id);
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .select();
 
-      if (error) {
-        // إذا فشل الحذف، نظهر الخطأ للمستخدم
-        showToast(`خطأ في الحذف: ${error.message}`);
-        console.error('Delete error:', error);
-      } else {
-        showToast('تم حذف الفاتورة بنجاح');
-        setInvoices(prev => prev.filter(inv => inv.id !== id));
-        window.dispatchEvent(new Event('invoiceDeleted'));
-        setConfirmDelete(null);
-      }
+      if (error) throw error;
+
+      showToast('تم حذف الفاتورة بنجاح');
+      setInvoices(prev => prev.filter(inv => inv.id !== id));
+      window.dispatchEvent(new Event('invoiceDeleted'));
+      setConfirmDelete(null);
     } catch (err: any) {
-      showToast('حدث خطأ غير متوقع');
+      console.error('Delete error:', err);
+      showToast(`فشل الحذف: ${err.message}`);
     }
   };
 
