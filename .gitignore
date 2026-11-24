@@ -4,3 +4,4 @@
 .claude
 *.log
 .DS_Store
+qa-report.json

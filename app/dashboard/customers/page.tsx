@@ -15,8 +15,12 @@ export default function CustomersPage() {
   }, []);
 
   const loadCustomers = async () => {
-    const data = await getCustomers();
-    setCustomers(data);
+    try {
+      const data = await getCustomers();
+      setCustomers(data || []);
+    } catch (e) {
+      console.warn('تعذر تحميل العملاء', e);
+    }
   };
 
   return (
