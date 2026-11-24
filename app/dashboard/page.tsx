@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { DollarSign, Receipt, TrendingUp, TrendingDown, CreditCard, AlertTriangle, Plus, FileText, Briefcase, FilePlus, UserPlus, PackagePlus, BarChart3, BookOpen } from 'lucide-react';
 
 export default function DashboardPage() {
-  const [dateRange, setDateRange] = useState('اليوم');
+  const [dateRange, setDateRange] = useState('هذا الشهر');
   const [stats, setStats] = useState({ sales: 0, purchases: 0, profit: 0, receivables: 0, payables: 0, expenses: 0 });
 
   const fetchStats = async () => {
