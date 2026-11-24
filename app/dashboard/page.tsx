@@ -3,10 +3,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { DollarSign, Receipt, TrendingUp, TrendingDown, CreditCard, AlertTriangle, Plus, FileText, Briefcase, FilePlus, UserPlus, PackagePlus, BarChart3, BookOpen } from 'lucide-react';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [invQ, setInvQ] = useState('');
+  const [custQ, setCustQ] = useState('');
   const [dateRange, setDateRange] = useState('هذا الشهر');
   const [stats, setStats] = useState({ sales: 0, purchases: 0, profit: 0, receivables: 0, payables: 0, expenses: 0 });
 
@@ -48,14 +52,14 @@ export default function DashboardPage() {
   ];
 
   const quickActions = [
-    { name: 'فاتورة بيع', icon: FileText },
-    { name: 'فاتورة شراء', icon: Receipt },
-    { name: 'سند قبض', icon: DollarSign },
-    { name: 'سند صرف', icon: TrendingDown },
-    { name: 'عميل جديد', icon: UserPlus },
-    { name: 'منتج جديد', icon: PackagePlus },
-    { name: 'قيد يومية', icon: BookOpen },
-    { name: 'التقارير', icon: BarChart3 },
+    { name: 'فاتورة بيع', href: '/dashboard/invoicing', icon: FileText },
+    { name: 'فاتورة شراء', href: '/dashboard/purchases', icon: Receipt },
+    { name: 'سند قبض', href: '/dashboard/debts', icon: DollarSign },
+    { name: 'سند صرف', href: '/dashboard/accounts', icon: TrendingDown },
+    { name: 'عميل جديد', href: '/dashboard/customers/new', icon: UserPlus },
+    { name: 'منتج جديد', href: '/dashboard/inventory', icon: PackagePlus },
+    { name: 'قيد يومية', href: '/dashboard/accounting', icon: BookOpen },
+    { name: 'التقارير', href: '/dashboard/reports', icon: BarChart3 },
   ];
 
   return (
@@ -72,14 +76,14 @@ export default function DashboardPage() {
 
       {/* Quick Search */}
       <div className="grid grid-cols-2 gap-4">
-        <Input placeholder="البحث عن فاتورة (رقم/عميل)..." className="bg-slate-900 border-slate-700" />
-        <Input placeholder="البحث عن عميل (اسم/هاتف)..." className="bg-slate-900 border-slate-700" />
+        <Input value={invQ} onChange={(e) => setInvQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && router.push(`/dashboard/sales?q=${encodeURIComponent(invQ)}`)} placeholder="البحث عن فاتورة (عميل/هاتف) ثم Enter..." className="bg-slate-900 border-slate-700" />
+        <Input value={custQ} onChange={(e) => setCustQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && router.push(`/dashboard/customers?q=${encodeURIComponent(custQ)}`)} placeholder="البحث عن عميل (اسم/هاتف) ثم Enter..." className="bg-slate-900 border-slate-700" />
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
         {quickActions.map((a, i) => (
-          <button key={i} className="flex flex-col items-center justify-center p-4 bg-slate-800 rounded-lg hover:bg-[#FF685B] transition-colors group">
+          <button key={i} onClick={() => router.push(a.href)} className="flex flex-col items-center justify-center p-4 bg-slate-800 rounded-lg hover:bg-[#FF685B] transition-colors group">
             <a.icon className="w-6 h-6 mb-2 group-hover:text-white" />
             <span className="text-xs font-bold text-slate-300 group-hover:text-white">{a.name}</span>
           </button>

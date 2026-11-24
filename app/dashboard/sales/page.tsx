@@ -36,6 +36,8 @@ export default function SalesHistoryPage() {
 
   useEffect(() => {
     setSelectedMonth(new Date());
+    const q0 = new URLSearchParams(window.location.search).get('q');
+    if (q0) setSearchTerm(q0);
   }, []);
 
   const fetchInvoices = async () => {

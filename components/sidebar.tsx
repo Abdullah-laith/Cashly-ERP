@@ -12,30 +12,23 @@ const menuItems = [
   { name: 'لوحة التحكم', path: '/dashboard', icon: LayoutDashboard },
   {
     name: 'المبيعات', icon: Receipt, children: [
-      { name: 'إدارة الفواتير', path: '/dashboard/sales/invoices' },
-      { name: 'إنشاء فاتورة', path: '/dashboard/sales/create' },
+      { name: 'إنشاء فاتورة', path: '/dashboard/invoicing' },
       { name: 'سجل المبيعات', path: '/dashboard/sales' }
     ]
   },
   { name: 'العملاء', path: '/dashboard/customers', icon: Users },
-  {
-    name: 'المخزون', icon: Boxes, children: [
-      { name: 'المخزن الرئيسي', path: '/dashboard/inventory' },
-      { name: 'المنتجات', path: '/dashboard/inventory/products' },
-      { name: 'المستودعات', path: '/dashboard/inventory/warehouses' },
-      { name: 'الأذون المخزنية', path: '/dashboard/inventory/orders' }
-    ]
-  },
+  { name: 'المخزون والمنتجات', path: '/dashboard/inventory', icon: Boxes },
   {
     name: 'المشتريات', icon: ShoppingCart, children: [
       { name: 'سجل المشتريات', path: '/dashboard/purchases' },
-      { name: 'فواتير الشراء', path: '/dashboard/purchases/invoices' },
       { name: 'الموردون', path: '/dashboard/purchases/suppliers' }
     ]
   },
   {
     name: 'المالية', icon: Wallet, children: [
-      { name: 'المصروفات', path: '/dashboard/finance/expenses' },
+      { name: 'المصروفات', path: '/dashboard/accounts' },
+      { name: 'الديون والتحصيل', path: '/dashboard/debts' },
+      { name: 'إغلاق الصندوق', path: '/dashboard/closing' },
       { name: 'سند جديد', path: '/dashboard/finance/vouchers/new' }
     ]
   },

@@ -113,6 +113,27 @@ async function main() {
     visited.push({ href, status });
   }
 
+  // --- Dead-button check on the dashboard + topbar (buttons that do nothing when clicked)
+  currentPage = '/dashboard (buttons)';
+  await nav('/dashboard');
+  await page.waitForTimeout(1500);
+  const skip = /تسجيل الخروج|حذف|delete/i;
+  const btnLoc = page.locator('header button, main button');
+  const btnCount = await btnLoc.count();
+  for (let i = 0; i < btnCount; i++) {
+    if (!page.url().includes('/dashboard') || page.url().includes('/login')) break;
+    const b = btnLoc.nth(i);
+    const label = ((await b.innerText().catch(() => '')) || (await b.getAttribute('aria-label').catch(() => '')) || `button#${i}`).trim().slice(0, 40);
+    if (skip.test(label) || !(await b.isVisible().catch(() => false)) || (await b.isDisabled().catch(() => false))) continue;
+    const before = { url: page.url(), html: await page.evaluate(() => document.documentElement.outerHTML.length + '|' + document.documentElement.className) };
+    await b.click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(900);
+    const after = { url: page.url(), html: await page.evaluate(() => document.documentElement.outerHTML.length + '|' + document.documentElement.className) };
+    if (before.url === after.url && before.html === after.html) add('dead.button', `Button "${label}" does nothing when clicked`);
+    if (after.url !== before.url) { await nav('/dashboard'); await page.waitForTimeout(1200); }
+    else if (before.html !== after.html) await page.keyboard.press('Escape').catch(() => {});
+  }
+
   // --- Smoke tests
   const smoke = [];
   const step = async (name, fn) => {

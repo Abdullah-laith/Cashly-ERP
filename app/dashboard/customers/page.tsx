@@ -9,8 +9,10 @@ import { useRouter } from 'next/navigation';
 export default function CustomersPage() {
   const router = useRouter();
   const [customers, setCustomers] = useState<any[]>([]);
+  const [q, setQ] = useState('');
 
   useEffect(() => {
+    setQ(new URLSearchParams(window.location.search).get('q') || '');
     loadCustomers();
   }, []);
 
@@ -32,6 +34,8 @@ export default function CustomersPage() {
         </Button>
       </div>
 
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="بحث بالاسم أو الهاتف..." className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
+
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
@@ -43,7 +47,7 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.map((c) => (
+            {customers.filter((c) => !q || c.name?.includes(q) || c.phone?.includes(q)).map((c) => (
               <TableRow key={c.id}>
                 <TableCell>{c.name}</TableCell>
                 <TableCell>{c.phone}</TableCell>

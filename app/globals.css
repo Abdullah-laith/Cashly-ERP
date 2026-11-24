@@ -28,3 +28,15 @@
     display: block !important;
   }
 }
+
+/* ---- Light theme (toggled via html.light by the Topbar) ---- */
+html.light body { background-color: #F1F5F9; color: #0F172A; }
+html.light .bg-\[\#0F172A\] { background-color: #F1F5F9 !important; }
+html.light .bg-\[\#070B14\], html.light .bg-\[\#0B1120\] { background-color: #FFFFFF !important; }
+html.light .bg-slate-900, html.light [class*="bg-slate-900/"] { background-color: #FFFFFF !important; }
+html.light .bg-slate-800, html.light [class*="bg-slate-800/"] { background-color: #E2E8F0 !important; }
+html.light .hover\:bg-slate-800:hover, html.light [class*="hover:bg-slate-800/"]:hover { background-color: #E2E8F0 !important; }
+html.light .border-slate-800, html.light .border-slate-700 { border-color: #CBD5E1 !important; }
+html.light .text-slate-400, html.light .text-slate-300, html.light .text-slate-500 { color: #475569 !important; }
+html.light .text-white:not([class*="bg-[#FF"]):not([class*="bg-gradient"]):not(.bg-red-500):not(.bg-emerald-600):not(.bg-blue-600) { color: #0F172A !important; }
+html.light .hover\:text-white:hover { color: #0F172A !important; }
