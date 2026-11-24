@@ -9,7 +9,11 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
 
   const load = async () => {
-    const { data } = await supabase.from('products').select('*');
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) return;
     setProducts(data || []);
   };
 
@@ -24,8 +28,9 @@ export default function ProductsPage() {
 
   const remove = async (id: string) => {
     if (!confirm('هل أنت متأكد؟')) return;
-    await supabase.from('products').delete().eq('id', id);
-    load();
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) return;
+    setProducts((current) => current.filter((product) => product.id !== id));
   };
 
   return (

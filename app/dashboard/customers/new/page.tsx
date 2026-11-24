@@ -16,10 +16,12 @@ export default function NewCustomerPage() {
     setSaving(true);
     setError('');
     try {
-      await addCustomer(form);
+      const createdCustomer = await addCustomer(form);
+      if (!createdCustomer?.id) throw new Error('تعذر تأكيد حفظ العميل');
       router.push('/dashboard/customers');
-    } catch (err: any) {
-      setError(err?.message || 'تعذر حفظ العميل');
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'تعذر حفظ العميل');
     } finally {
       setSaving(false);
     }
