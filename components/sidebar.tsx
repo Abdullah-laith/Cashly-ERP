@@ -12,34 +12,50 @@ const menuItems = [
   { name: 'لوحة التحكم', path: '/dashboard', icon: LayoutDashboard },
   {
     name: 'المبيعات', icon: Receipt, children: [
-      { name: 'إدارة الفواتير', path: '/sales/invoices' },
-      { name: 'إنشاء فاتورة', path: '/sales/create' },
-      { name: 'عروض الأسعار', path: '/sales/quotations' },
-      { name: 'الفواتير المرتجعة', path: '/sales/returns' },
-      { name: 'مدفوعات العملاء', path: '/sales/payments' }
+      { name: 'إدارة الفواتير', path: '/dashboard/sales/invoices' },
+      { name: 'إنشاء فاتورة', path: '/dashboard/sales/create' },
+      { name: 'سجل المبيعات', path: '/dashboard/sales' }
     ]
   },
-  { name: 'العملاء', path: '/customers', icon: Users },
+  { name: 'العملاء', path: '/dashboard/customers', icon: Users },
   {
     name: 'المخزون', icon: Boxes, children: [
-      { name: 'المنتجات', path: '/inventory/products' },
-      { name: 'المستودعات', path: '/inventory/warehouses' },
-      { name: 'الأذون المخزنية', path: '/inventory/orders' }
+      { name: 'المخزن الرئيسي', path: '/dashboard/inventory' },
+      { name: 'المنتجات', path: '/dashboard/inventory/products' },
+      { name: 'المستودعات', path: '/dashboard/inventory/warehouses' },
+      { name: 'الأذون المخزنية', path: '/dashboard/inventory/orders' }
     ]
   },
   {
     name: 'المشتريات', icon: ShoppingCart, children: [
-      { name: 'فواتير الشراء', path: '/purchases/invoices' },
-      { name: 'الموردون', path: '/suppliers' }
+      { name: 'سجل المشتريات', path: '/dashboard/purchases' },
+      { name: 'فواتير الشراء', path: '/dashboard/purchases/invoices' },
+      { name: 'الموردون', path: '/dashboard/purchases/suppliers' }
     ]
   },
-  { name: 'المالية', icon: Wallet, path: '/finance' },
-  { name: 'إدارة التقسيط', icon: Percent, path: '/installments' },
-  { name: 'الحسابات العامة', icon: BookOpen, path: '/accounts' },
-  { name: 'المستخدمون', icon: UserShield, path: '/users' },
-  { name: 'قوالب الطباعة', icon: Printer, path: '/templates' },
-  { name: 'التقارير', icon: BarChart3, path: '/reports' },
-  { name: 'الإعدادات', icon: Settings, path: '/settings' },
+  {
+    name: 'المالية', icon: Wallet, children: [
+      { name: 'المصروفات', path: '/dashboard/finance/expenses' },
+      { name: 'سند جديد', path: '/dashboard/finance/vouchers/new' }
+    ]
+  },
+  { name: 'إدارة التقسيط', icon: Percent, path: '/dashboard/installments' },
+  { name: 'الحسابات العامة', icon: BookOpen, path: '/dashboard/accounting' },
+  { name: 'المستخدمون', icon: UserShield, path: '/dashboard/users' },
+  {
+    name: 'التقارير', icon: BarChart3, children: [
+      { name: 'المركز الرئيسي', path: '/dashboard/reports' },
+      { name: 'الأرباح والخسائر', path: '/dashboard/reports/accounting/profit' },
+      { name: 'أعمار الديون', path: '/dashboard/reports/customers/aging' },
+      { name: 'جرد المخزون', path: '/dashboard/reports/inventory/valuation' }
+    ]
+  },
+  {
+    name: 'الإعدادات', icon: Settings, children: [
+      { name: 'إعدادات النظام', path: '/dashboard/settings' },
+      { name: 'العملات', path: '/dashboard/settings/currencies' }
+    ]
+  },
 ];
 
 export default function Sidebar({ settings }: { settings?: any } = {}) {
@@ -65,7 +81,7 @@ export default function Sidebar({ settings }: { settings?: any } = {}) {
               <div>
                 <button
                   onClick={() => toggleAccordion(item.name)}
-                  className={cn("flex w-full items-center justify-between px-4 py-3 rounded-lg hover:bg-slate-800")}
+                  className={cn("flex w-full items-center justify-between px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors")}
                 >
                   <div className="flex items-center gap-3">
                     <item.icon className="w-5 h-5 text-slate-400" /> {item.name}
@@ -75,7 +91,7 @@ export default function Sidebar({ settings }: { settings?: any } = {}) {
                 {openItems.includes(item.name) && (
                   <div className="pl-4 pr-8 py-1 space-y-1">
                     {item.children.map(child => (
-                      <a key={child.path} href={child.path} className="block px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-md">
+                      <a key={child.path} href={child.path} className={cn("block px-4 py-2 text-sm rounded-md transition-colors", pathname === child.path ? "text-[#FF685B] bg-slate-800/80 font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800/50")}>
                         {child.name}
                       </a>
                     ))}
@@ -83,14 +99,14 @@ export default function Sidebar({ settings }: { settings?: any } = {}) {
                 )}
               </div>
             ) : (
-              <a href={item.path} className={cn("flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800", pathname === item.path ? "bg-[#FF6B5B]/10 text-[#FF6B5B]" : "text-slate-400")}>
+              <a href={item.path} className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-colors", pathname === item.path ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
                 <item.icon className="w-5 h-5" /> {item.name}
               </a>
             )}
           </div>
         ))}
       </div>
-      <button onClick={handleLogout} className="mt-auto flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-900/10">
+      <button onClick={handleLogout} className="mt-auto flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-900/10 transition-colors">
         <LogOut className="w-5 h-5" /> تسجيل الخروج
       </button>
     </nav>
