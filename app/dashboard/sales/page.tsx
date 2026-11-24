@@ -65,6 +65,8 @@ export default function SalesHistoryPage() {
 
       if (response.error) {
         showToast(`فشل الحذف: ${response.error.message}`);
+      } else if (!response.data) {
+        showToast('لم يتم الحذف: لا توجد صلاحية أو الفاتورة محذوفة مسبقاً');
       } else {
         showToast('تم حذف الفاتورة');
         setInvoices(prev => prev.filter(inv => inv.id !== id));
