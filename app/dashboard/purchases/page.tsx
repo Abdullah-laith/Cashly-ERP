@@ -1,17 +1,16 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export default function PurchasesPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
-  const [newPurchase, setNewPurchase] = useState({ supplier: '', product_id: '', qty: 0, cost: 0 });
+  const [newPurchase, setNewPurchase] = useState({ supplier: '', product_id: '', qty: 0, cost: 0, extraCosts: 0 });
 
   useEffect(() => { fetchData(); }, []);
 
@@ -25,24 +24,25 @@ export default function PurchasesPage() {
   const registerPurchase = async () => {
     if (!newPurchase.supplier || !newPurchase.product_id || newPurchase.qty <= 0) return alert('يرجى إكمال بيانات الشراء');
 
-    // 1. تسجيل الفاتورة
+    const totalCost = (newPurchase.qty * newPurchase.cost) + newPurchase.extraCosts;
+    const landedCostPerUnit = totalCost / newPurchase.qty;
+
     const { data: pData, error: pErr } = await supabase.from('purchases').insert([{
       supplier_name: newPurchase.supplier,
-      total_cost: newPurchase.qty * newPurchase.cost
+      total_cost: totalCost
     }]).select().single();
 
     if (pErr) return alert('خطأ في تسجيل المشتريات');
 
-    // 2. تحديث المخزون
     const product = products.find(p => p.id === newPurchase.product_id);
     await supabase.from('products').update({
       quantity: (product?.quantity || 0) + newPurchase.qty,
-      cost_price: newPurchase.cost
+      cost_price: landedCostPerUnit
     }).eq('id', newPurchase.product_id);
 
-    setNewPurchase({ supplier: '', product_id: '', qty: 0, cost: 0 });
+    setNewPurchase({ supplier: '', product_id: '', qty: 0, cost: 0, extraCosts: 0 });
     fetchData();
-    alert('تم إضافة البضاعة للمخزن بنجاح!');
+    alert('تم إضافة البضاعة وتوزيع المصاريف بنجاح!');
   };
 
   return (
@@ -51,14 +51,15 @@ export default function PurchasesPage() {
 
       <Card className="bg-[#1E293B] border-slate-700 p-6">
         <h2 className="text-lg font-bold mb-4">تسجيل فاتورة شراء جديدة</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Input placeholder="اسم المورد" value={newPurchase.supplier} onChange={e => setNewPurchase({...newPurchase, supplier: e.target.value})} />
           <select className="bg-[#0B1120] border-slate-700 rounded-md px-2" onChange={e => setNewPurchase({...newPurchase, product_id: e.target.value})}>
             <option value="">اختر المنتج</option>
             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
           <Input type="number" placeholder="الكمية" value={newPurchase.qty} onChange={e => setNewPurchase({...newPurchase, qty: Number(e.target.value)})} />
-          <Input type="number" placeholder="سعر التكلفة" value={newPurchase.cost} onChange={e => setNewPurchase({...newPurchase, cost: Number(e.target.value)})} />
+          <Input type="number" placeholder="سعر الشراء" value={newPurchase.cost} onChange={e => setNewPurchase({...newPurchase, cost: Number(e.target.value)})} />
+          <Input type="number" placeholder="مصاريف إضافية" value={newPurchase.extraCosts} onChange={e => setNewPurchase({...newPurchase, extraCosts: Number(e.target.value)})} />
           <Button onClick={registerPurchase} className="bg-[#10B981]"><Plus className="w-4 h-4 mr-2"/> إضافة للمخزن</Button>
         </div>
       </Card>

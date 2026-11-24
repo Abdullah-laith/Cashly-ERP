@@ -1,12 +1,54 @@
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Wallet, Boxes, Receipt, Settings, PieChart, History, Calculator, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard, ShoppingCart, Users, Boxes, Receipt,
+  Wallet, Percent, BookOpen, UserShield, Printer, BarChart3, Settings,
+  LogOut, ChevronDown
+} from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
 
-export default function Sidebar({ settings }: { settings: { use_inventory: boolean; use_invoicing: boolean } }) {
+const menuItems = [
+  { name: 'لوحة التحكم', path: '/dashboard', icon: LayoutDashboard },
+  {
+    name: 'المبيعات', icon: Receipt, children: [
+      { name: 'إدارة الفواتير', path: '/sales/invoices' },
+      { name: 'إنشاء فاتورة', path: '/sales/create' },
+      { name: 'عروض الأسعار', path: '/sales/quotations' },
+      { name: 'الفواتير المرتجعة', path: '/sales/returns' },
+      { name: 'مدفوعات العملاء', path: '/sales/payments' }
+    ]
+  },
+  { name: 'العملاء', path: '/customers', icon: Users },
+  {
+    name: 'المخزون', icon: Boxes, children: [
+      { name: 'المنتجات', path: '/inventory/products' },
+      { name: 'المستودعات', path: '/inventory/warehouses' },
+      { name: 'الأذون المخزنية', path: '/inventory/orders' }
+    ]
+  },
+  {
+    name: 'المشتريات', icon: ShoppingCart, children: [
+      { name: 'فواتير الشراء', path: '/purchases/invoices' },
+      { name: 'الموردون', path: '/suppliers' }
+    ]
+  },
+  { name: 'المالية', icon: Wallet, path: '/finance' },
+  { name: 'إدارة التقسيط', icon: Percent, path: '/installments' },
+  { name: 'الحسابات العامة', icon: BookOpen, path: '/accounts' },
+  { name: 'المستخدمون', icon: UserShield, path: '/users' },
+  { name: 'قوالب الطباعة', icon: Printer, path: '/templates' },
+  { name: 'التقارير', icon: BarChart3, path: '/reports' },
+  { name: 'الإعدادات', icon: Settings, path: '/settings' },
+];
+
+export default function Sidebar({ settings }: { settings?: any } = {}) {
   const pathname = usePathname();
+  const [openItems, setOpenItems] = useState<string[]>([]);
 
-  const isActive = (path: string) => pathname === path;
+  const toggleAccordion = (name: string) => {
+    setOpenItems(prev => prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -14,51 +56,41 @@ export default function Sidebar({ settings }: { settings: { use_inventory: boole
   };
 
   return (
-    <nav className="flex-1 px-4 space-y-2 mt-4 flex flex-col justify-between h-full pb-6">
-      <div className="space-y-2">
-        <a href="/dashboard" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-          <LayoutDashboard className="w-5 h-5" /> الرئيسية
-        </a>
-        <a href="/dashboard/accounts" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard/accounts') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-          <Wallet className="w-5 h-5" /> الحسابات
-        </a>
-
-        {settings.use_inventory && (
-          <a href="/dashboard/inventory" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard/inventory') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-            <Boxes className="w-5 h-5" /> المخازن
-          </a>
-        )}
-
-        <a href="/dashboard/purchases" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard/purchases') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-          <Receipt className="w-5 h-5" /> المشتريات
-        </a>
-
-        {settings.use_invoicing && (
-          <a href="/dashboard/invoicing" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard/invoicing') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-            <Receipt className="w-5 h-5" /> الفواتير والمبيعات
-          </a>
-        )}
-
-        <a href="/dashboard/sales" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard/sales') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-          <History className="w-5 h-5" /> سجل المبيعات
-        </a>
-
-        <a href="/dashboard/closing" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard/closing') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-          <Calculator className="w-5 h-5" /> تقفيل الصندوق
-        </a>
-
-        <a href="/dashboard/reports" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard/reports') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-          <PieChart className="w-5 h-5" /> التقارير
-        </a>
-
-        <div className="border-t border-slate-700/60 my-4" />
-
-        <a href="/dashboard/settings" className={cn("flex items-center gap-3 px-4 py-3 rounded-lg transition-all", isActive('/dashboard/settings') ? "bg-[#FF6B5B]/10 text-[#FF6B5B] font-medium" : "text-slate-400 hover:text-white hover:bg-slate-800")}>
-          <Settings className="w-5 h-5" /> الإعدادات
-        </a>
+    <nav className="w-64 bg-[#070B14] text-white flex flex-col h-screen overflow-y-auto p-4 border-l border-slate-800">
+      <div className="text-xl font-bold mb-8 px-4 text-[#FF685B]">Cashly ERP</div>
+      <div className="space-y-1">
+        {menuItems.map((item) => (
+          <div key={item.name}>
+            {item.children ? (
+              <div>
+                <button
+                  onClick={() => toggleAccordion(item.name)}
+                  className={cn("flex w-full items-center justify-between px-4 py-3 rounded-lg hover:bg-slate-800")}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className="w-5 h-5 text-slate-400" /> {item.name}
+                  </div>
+                  <ChevronDown className={cn("w-4 h-4 transition-transform", openItems.includes(item.name) ? "rotate-180" : "")} />
+                </button>
+                {openItems.includes(item.name) && (
+                  <div className="pl-4 pr-8 py-1 space-y-1">
+                    {item.children.map(child => (
+                      <a key={child.path} href={child.path} className="block px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-md">
+                        {child.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <a href={item.path} className={cn("flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800", pathname === item.path ? "bg-[#FF6B5B]/10 text-[#FF6B5B]" : "text-slate-400")}>
+                <item.icon className="w-5 h-5" /> {item.name}
+              </a>
+            )}
+          </div>
+        ))}
       </div>
-
-      <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-slate-400 hover:text-red-400 hover:bg-red-900/10 w-full mt-auto">
+      <button onClick={handleLogout} className="mt-auto flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-900/10">
         <LogOut className="w-5 h-5" /> تسجيل الخروج
       </button>
     </nav>
