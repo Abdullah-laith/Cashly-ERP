@@ -3,19 +3,48 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from '@/lib/supabase';
 import { DollarSign, Receipt, TrendingUp, TrendingDown, CreditCard, AlertTriangle, Plus, FileText, Briefcase, FilePlus, UserPlus, PackagePlus, BarChart3, BookOpen } from 'lucide-react';
 
 export default function DashboardPage() {
   const [dateRange, setDateRange] = useState('اليوم');
   const [stats, setStats] = useState({ sales: 0, purchases: 0, profit: 0, receivables: 0, payables: 0, expenses: 0 });
 
+  const fetchStats = async () => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    if (dateRange === 'آخر 7 أيام') d.setDate(d.getDate() - 6);
+    else if (dateRange === 'هذا الشهر') d.setDate(1);
+    else if (dateRange === 'هذه السنة') { d.setMonth(0); d.setDate(1); }
+    const from = d.toISOString();
+    const sum = (rows: any[] | null, k: string) => (rows || []).reduce((a, r) => a + Number(r[k] || 0), 0);
+
+    const [inv, pur, exp, debt] = await Promise.all([
+      supabase.from('invoices').select('total_amount').is('deleted_at', null).gte('created_at', from),
+      supabase.from('purchases').select('total_cost').gte('created_at', from),
+      supabase.from('expenses').select('amount').gte('created_at', from),
+      supabase.from('invoices').select('remaining_debt').is('deleted_at', null).gt('remaining_debt', 0),
+    ]);
+    const sales = sum(inv.data, 'total_amount');
+    const purchases = sum(pur.data, 'total_cost');
+    const expenses = sum(exp.data, 'amount');
+    setStats({ sales, purchases, expenses, receivables: sum(debt.data, 'remaining_debt'), payables: 0, profit: sales - purchases - expenses });
+  };
+
+  useEffect(() => {
+    fetchStats();
+    const onFocus = () => fetchStats();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange]);
+
   const kpiCards = [
-    { title: "صافي المبيعات", value: 12500000, icon: DollarSign, color: "text-emerald-500" },
-    { title: "إجمالي المشتريات", value: 8400000, icon: Receipt, color: "text-blue-500" },
-    { title: "صافي الربح", value: 4100000, icon: TrendingUp, color: "text-cyan-500" },
-    { title: "مستحقات العملاء", value: 2300000, icon: CreditCard, color: "text-amber-500" },
-    { title: "مستحقات الموردين", value: 1800000, icon: TrendingDown, color: "text-rose-500" },
-    { title: "رصيد الخزائن", value: 5600000, icon: Briefcase, color: "text-purple-500" },
+    { title: "صافي المبيعات", value: stats.sales, icon: DollarSign, color: "text-emerald-500" },
+    { title: "إجمالي المشتريات", value: stats.purchases, icon: Receipt, color: "text-blue-500" },
+    { title: "صافي الربح", value: stats.profit, icon: TrendingUp, color: "text-cyan-500" },
+    { title: "مستحقات العملاء", value: stats.receivables, icon: CreditCard, color: "text-amber-500" },
+    { title: "المصروفات", value: stats.expenses, icon: TrendingDown, color: "text-rose-500" },
   ];
 
   const quickActions = [
@@ -58,7 +87,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {kpiCards.map((kpi, i) => (
           <Card key={i} className="bg-slate-900 border-slate-800">
             <CardContent className="pt-6">
