@@ -22,6 +22,7 @@ type CartLine = Product & { qty: number; price: number };
 
 const money = (value: number, currency: 'IQD' | 'USD') => `${value.toLocaleString()} ${currency === 'IQD' ? 'د.ع' : '$'}`;
 const today = () => new Date().toISOString().slice(0, 10);
+const newInvoiceNumber = () => `INV-${new Date().getTime().toString().slice(-8)}`;
 
 export default function InvoicingPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -34,7 +35,8 @@ export default function InvoicingPage() {
   const [customerQuery, setCustomerQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '' });
-  const [invoiceDate, setInvoiceDate] = useState(today());
+  const [invoiceDate, setInvoiceDate] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
   const [treasuryId, setTreasuryId] = useState('');
   const [currency, setCurrency] = useState<'IQD' | 'USD'>('IQD');
@@ -48,9 +50,10 @@ export default function InvoicingPage() {
   const [saving, setSaving] = useState(false);
   const [suspended, setSuspended] = useState<any[]>([]);
 
-  const invoiceNumber = useMemo(() => `INV-${new Date().getTime().toString().slice(-8)}`, []);
-
   useEffect(() => {
+    setInvoiceDate(today());
+    setInvoiceNumber(newInvoiceNumber());
+
     const load = async () => {
       const [p, c, w, t] = await Promise.all([
         supabase.from('products').select('*').order('name'),
