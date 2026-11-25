@@ -43,13 +43,22 @@ export default function LoginPage() {
     } else {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await saveOrganizationSettings(user.id, {
-          default_currency: 'IQD',
-          onboarding_completed: false,
-          trial_starts_at: new Date().toISOString(),
-          trial_ends_at: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-          subscription_status: 'trial',
-        });
+        // Only initialize a brand-new account. Never reset an existing user's
+        // onboarding flag or trial dates on a normal login.
+        const { data: settings } = await supabase
+          .from('organization_settings')
+          .select('user_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (!settings) {
+          await saveOrganizationSettings(user.id, {
+            default_currency: 'IQD',
+            onboarding_completed: false,
+            trial_starts_at: new Date().toISOString(),
+            trial_ends_at: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+            subscription_status: 'trial',
+          });
+        }
       }
       setMessage({ type: 'success', text: 'تم تسجيل الدخول، جاري التحويل...' });
       window.location.href = '/dashboard';
