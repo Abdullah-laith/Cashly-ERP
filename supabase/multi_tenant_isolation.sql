@@ -1,10 +1,11 @@
 -- Cashly ERP: isolate business data per authenticated user.
 -- Run this whole file once in Supabase SQL Editor.
--- Do not run it from Vercel or GitHub; SQL files are not executed automatically.
+-- SQL files in GitHub/Vercel are not executed automatically.
 
 DO $$
 DECLARE
   table_name text;
+  policy_name text;
 BEGIN
   FOREACH table_name IN ARRAY ARRAY[
     'customers','suppliers','warehouses','brands','categories','unit_templates',
@@ -15,41 +16,48 @@ BEGIN
     IF to_regclass('public.' || table_name) IS NOT NULL THEN
       EXECUTE format('ALTER TABLE public.%I ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE', table_name);
       EXECUTE format('ALTER TABLE public.%I ALTER COLUMN user_id SET DEFAULT auth.uid()', table_name);
+      EXECUTE format('UPDATE public.%I SET user_id = (SELECT id FROM auth.users ORDER BY created_at ASC LIMIT 1) WHERE user_id IS NULL', table_name);
       EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', table_name);
 
-      -- Existing data remains owned by the first/old account. New accounts start empty.
-      EXECUTE format('UPDATE public.%I SET user_id = (SELECT id FROM auth.users ORDER BY created_at ASC LIMIT 1) WHERE user_id IS NULL', table_name);
+      -- RLS policies are OR-ed together. Remove every legacy policy, regardless of name.
+      FOR policy_name IN
+        SELECT policyname FROM pg_policies
+        WHERE schemaname = 'public' AND tablename = table_name
+      LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', policy_name, table_name);
+      END LOOP;
 
-      EXECUTE format('DROP POLICY IF EXISTS "authenticated all" ON public.%I', table_name);
-      EXECUTE format('DROP POLICY IF EXISTS "user data select" ON public.%I', table_name);
-      EXECUTE format('DROP POLICY IF EXISTS "user data insert" ON public.%I', table_name);
-      EXECUTE format('DROP POLICY IF EXISTS "user data update" ON public.%I', table_name);
-      EXECUTE format('DROP POLICY IF EXISTS "user data delete" ON public.%I', table_name);
-
-      EXECUTE format('CREATE POLICY "user data select" ON public.%I FOR SELECT TO authenticated USING (user_id = auth.uid())', table_name);
-      EXECUTE format('CREATE POLICY "user data insert" ON public.%I FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid())', table_name);
-      EXECUTE format('CREATE POLICY "user data update" ON public.%I FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid())', table_name);
-      EXECUTE format('CREATE POLICY "user data delete" ON public.%I FOR DELETE TO authenticated USING (user_id = auth.uid())', table_name);
+      EXECUTE format('CREATE POLICY "cashly user select" ON public.%I FOR SELECT TO authenticated USING (user_id = auth.uid())', table_name);
+      EXECUTE format('CREATE POLICY "cashly user insert" ON public.%I FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid())', table_name);
+      EXECUTE format('CREATE POLICY "cashly user update" ON public.%I FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid())', table_name);
+      EXECUTE format('CREATE POLICY "cashly user delete" ON public.%I FOR DELETE TO authenticated USING (user_id = auth.uid())', table_name);
     END IF;
   END LOOP;
 END $$;
 
--- Settings must also be private per account.
-ALTER TABLE IF EXISTS public.organization_settings ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "authenticated all" ON public.organization_settings;
-DROP POLICY IF EXISTS "Users can view their own settings" ON public.organization_settings;
-DROP POLICY IF EXISTS "saas authenticated settings select" ON public.organization_settings;
-DROP POLICY IF EXISTS "saas authenticated settings insert" ON public.organization_settings;
-DROP POLICY IF EXISTS "saas authenticated settings update" ON public.organization_settings;
-DROP POLICY IF EXISTS "saas authenticated settings delete" ON public.organization_settings;
+-- Apply the same complete policy reset to project settings.
+DO $$
+DECLARE
+  policy_name text;
+BEGIN
+  IF to_regclass('public.organization_settings') IS NOT NULL THEN
+    ALTER TABLE public.organization_settings ENABLE ROW LEVEL SECURITY;
+    FOR policy_name IN
+      SELECT policyname FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'organization_settings'
+    LOOP
+      EXECUTE format('DROP POLICY IF EXISTS %I ON public.organization_settings', policy_name);
+    END LOOP;
 
-CREATE POLICY "settings select own user" ON public.organization_settings
-  FOR SELECT TO authenticated USING (user_id = auth.uid());
-CREATE POLICY "settings insert own user" ON public.organization_settings
-  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
-CREATE POLICY "settings update own user" ON public.organization_settings
-  FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
-CREATE POLICY "settings delete own user" ON public.organization_settings
-  FOR DELETE TO authenticated USING (user_id = auth.uid());
+    CREATE POLICY "cashly settings select" ON public.organization_settings
+      FOR SELECT TO authenticated USING (user_id = auth.uid());
+    CREATE POLICY "cashly settings insert" ON public.organization_settings
+      FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+    CREATE POLICY "cashly settings update" ON public.organization_settings
+      FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+    CREATE POLICY "cashly settings delete" ON public.organization_settings
+      FOR DELETE TO authenticated USING (user_id = auth.uid());
+  END IF;
+END $$;
 
 NOTIFY pgrst, 'reload schema';
