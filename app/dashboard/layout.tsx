@@ -5,25 +5,38 @@ import { supabase } from '@/lib/supabase';
 import Sidebar from "@/components/sidebar";
 import Topbar from "@/components/layout/Topbar";
 import GlobalSoundProvider from "@/components/global-sound-provider";
+import { OrganizationProvider } from '@/components/organization-provider';
+import TrialGuard from '@/components/trial-guard';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       // جلب صلاحية المستخدم
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', user.id).single();
+        const [{ data: roleData }, { data: settingsData }] = await Promise.all([
+          supabase.from('user_roles').select('role').eq('user_id', user.id).maybeSingle(),
+          supabase.from('organization_settings').select('onboarding_completed').eq('user_id', user.id).maybeSingle(),
+        ]);
         if (roleData) setUserRole(roleData.role);
+        if (settingsData && settingsData.onboarding_completed === false) {
+          window.location.replace('/onboarding');
+          return;
+        }
       }
     };
-    fetchData();
+    fetchData().finally(() => setCheckingOnboarding(false));
   }, []);
 
+  if (checkingOnboarding) return <div className="grid min-h-screen place-items-center bg-[#101a27] text-slate-300" dir="rtl">جاري التحقق من إعداد مشروعك...</div>;
+
   return (
-    <GlobalSoundProvider>
+    <OrganizationProvider>
+      <GlobalSoundProvider>
       <div className="dashboard-shell min-h-screen bg-[#070B14] text-slate-50">
         <aside className="sidebar-slot hidden md:flex">
           <Sidebar />
@@ -41,9 +54,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
         <div className="workspace">
           <Topbar onMenuClick={() => setMobileMenuOpen(true)} />
-          <main className="dashboard-main">{children}</main>
+          <main className="dashboard-main"><TrialGuard>{children}</TrialGuard></main>
         </div>
       </div>
-    </GlobalSoundProvider>
+      </GlobalSoundProvider>
+    </OrganizationProvider>
   );
 }

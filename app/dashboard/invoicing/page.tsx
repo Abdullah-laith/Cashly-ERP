@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { CalendarDays, ChevronDown, ClipboardList, Minus, Plus, Printer, Search, Trash2, UserPlus, WalletCards, X } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-engine';
+import { useOrganization } from '@/components/organization-provider';
 
 type Product = {
   id: string;
@@ -26,6 +27,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const newInvoiceNumber = () => `INV-${new Date().getTime().toString().slice(-8)}`;
 
 export default function InvoicingPage() {
+  const { organization } = useOrganization();
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
@@ -146,7 +148,8 @@ export default function InvoicingPage() {
 
   return (
     <div className="min-h-full p-4 lg:p-6 text-slate-100 print:bg-white print:text-black">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div className="print-only mb-5 hidden border-b border-slate-300 pb-4 text-center text-black"><div className="flex items-center justify-center gap-3">{organization.logo_url && <img src={organization.logo_url} alt="شعار المشروع" className="h-14 w-14 object-contain" />}<h1 className="text-2xl font-black">{organization.business_name}</h1></div><p>{organization.business_phone}</p><p>{organization.business_address}</p></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5 print:hidden">
         <div><p className="text-sm text-slate-400">المبيعات / نقطة البيع</p><h1 className="text-2xl font-bold">نقطة البيع (POS)</h1></div>
         <div className="flex items-center gap-2 text-sm"><span className="text-slate-400">الفاتورة</span><b>{invoiceNumber}</b><CalendarDays className="w-4" /><input type="date" value={invoiceDate} onChange={e => setInvoiceDate(e.target.value)} className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-2" /></div>
       </div>

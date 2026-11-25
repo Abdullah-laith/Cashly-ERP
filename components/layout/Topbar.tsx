@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import SoundToggle from '@/components/sound-toggle';
+import { useOrganization } from '@/components/organization-provider';
 
 type Notice = { id: string; text: string; href: string; kind: 'stock' | 'debt' };
 
 export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter();
+  const { organization, trialDaysRemaining } = useOrganization();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [open, setOpen] = useState(false);
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -69,6 +71,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   return (
     <header className="topbar sticky top-0 z-40 flex items-center justify-between px-6 text-white">
       <div className="flex items-center gap-4">
+        {trialDaysRemaining !== null && <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200 sm:inline-flex">تجربة: {trialDaysRemaining} يوم</span>}
         {onMenuClick && <button type="button" aria-label="فتح القائمة" title="القائمة" onClick={onMenuClick} className="icon-button mobile-menu-button"><Menu className="w-5 h-5" /></button>}
         <SoundToggle />
         <button aria-label="تبديل الوضع" title={isDarkMode ? 'الوضع الفاتح' : 'الوضع الداكن'} onClick={toggleTheme} className="icon-button">
@@ -110,7 +113,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
         <div className="flex items-center gap-3 pl-2 border-l border-slate-800">
           <div className="text-right">
-            <div className="text-sm font-medium">{name || '...'}</div>
+            <div className="text-sm font-medium">{organization.business_name || name || '...'}</div>
             <div className="text-xs text-slate-400">{role}</div>
           </div>
           <div className="avatar-glass flex h-9 w-9 items-center justify-center rounded-full">

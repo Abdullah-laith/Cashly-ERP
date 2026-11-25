@@ -28,6 +28,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
+  // الحسابات الجديدة تكمل إعداد المشروع من الحارس العميل داخل dashboard layout.
+
   return res;
 }
 

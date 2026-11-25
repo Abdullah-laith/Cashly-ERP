@@ -7,6 +7,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useState } from 'react';
+import { useOrganization } from '@/components/organization-provider';
 
 const menuItems = [
   { name: 'لوحة التحكم', path: '/dashboard', icon: LayoutDashboard },
@@ -53,6 +54,7 @@ const menuItems = [
 
 export default function Sidebar({ settings, onNavigate }: { settings?: any; onNavigate?: () => void } = {}) {
   const pathname = usePathname();
+  const { organization, trialDaysRemaining } = useOrganization();
   const [openItems, setOpenItems] = useState<string[]>([]);
 
   const toggleAccordion = (name: string) => {
@@ -66,11 +68,12 @@ export default function Sidebar({ settings, onNavigate }: { settings?: any; onNa
 
   return (
     <nav className="sidebar-glass w-64 text-white flex flex-col h-screen overflow-y-auto p-4">
-      <div className="brand-lockup mb-8 gap-2.5 px-4">
-        <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 font-bold text-emerald-400">C</span>
-        <span className="text-xl font-bold">Cashly <em>ERP</em></span>
+      <div className="brand-lockup mb-5 gap-2.5 px-4">
+        {organization.logo_url ? <img src={organization.logo_url} alt="شعار المشروع" className="h-9 w-9 rounded-xl object-cover" /> : <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 font-bold text-emerald-400">C</span>}
+        <span className="min-w-0 text-xl font-bold"><span className="block truncate">{organization.business_name || 'Cashly'}</span><em className="block text-xs">ERP</em></span>
         {onNavigate && <button type="button" aria-label="إغلاق القائمة" onClick={onNavigate} className="icon-button mobile-sidebar-close mr-auto"><X className="h-4 w-4" /></button>}
       </div>
+      {trialDaysRemaining !== null && <a href="/dashboard/settings" className="mb-5 block rounded-xl border border-emerald-400/15 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-200">تجربة مجانية: متبقي {trialDaysRemaining} أيام</a>}
       <div className="space-y-1">
         {menuItems.map((item) => (
           <div key={item.name}>
