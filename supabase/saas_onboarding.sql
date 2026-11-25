@@ -17,8 +17,19 @@ ALTER TABLE IF EXISTS public.organization_settings
   ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '10 days'),
   ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'trial';
 
--- One settings record per authenticated merchant.
-CREATE UNIQUE INDEX IF NOT EXISTS organization_settings_user_id_key ON public.organization_settings(user_id) WHERE user_id IS NOT NULL;
+-- The legacy schema used organization_id as the primary key. The current app
+-- uses one settings row per auth user, so make user_id the real conflict key.
+-- This is intentionally a table constraint (not a partial index), because
+-- PostgREST upsert(onConflict: 'user_id') must be able to infer it.
+ALTER TABLE public.organization_settings
+  DROP CONSTRAINT IF EXISTS organization_settings_pkey;
+ALTER TABLE public.organization_settings
+  ALTER COLUMN organization_id DROP NOT NULL;
+ALTER TABLE public.organization_settings
+  DROP CONSTRAINT IF EXISTS organization_settings_user_id_key;
+DROP INDEX IF EXISTS public.organization_settings_user_id_key;
+ALTER TABLE public.organization_settings
+  ADD CONSTRAINT organization_settings_user_id_key UNIQUE (user_id);
 
 -- Backfill only NULL values. Existing user choices are preserved on re-runs.
 UPDATE public.organization_settings

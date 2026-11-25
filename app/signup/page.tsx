@@ -66,14 +66,14 @@ export default function SignupPage() {
     }
 
     const trialStartsAt = new Date().toISOString();
-    const { error: settingsError } = await supabase.from('organization_settings').upsert({
+    const { error: settingsError } = await supabase.from('organization_settings').insert({
       user_id: data.user.id,
       default_currency: form.currency,
       onboarding_completed: false,
       trial_starts_at: trialStartsAt,
       trial_ends_at: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
       subscription_status: 'trial',
-    }, { onConflict: 'user_id' });
+    });
 
     if (settingsError) {
       setMessage({ type: 'error', text: `تم إنشاء الحساب، لكن تعذر تجهيز المشروع: ${settingsError.message}` });
