@@ -4,6 +4,7 @@ import { getTreasuries, addVoucher } from '@/lib/finance';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from 'sonner';
+import { soundEngine } from '@/lib/sound-engine';
 
 export default function AddVoucherPage({ type }: { type: 'expense' | 'receipt' }) {
   const [treasuries, setTreasuries] = useState<any[]>([]);
@@ -18,8 +19,10 @@ export default function AddVoucherPage({ type }: { type: 'expense' | 'receipt' }
     setLoading(true);
     try {
       // Logic for adding voucher
+      soundEngine.playSuccess();
       toast.success('تم حفظ السند بنجاح');
     } catch (error) {
+      soundEngine.playError();
       toast.error('حدث خطأ أثناء حفظ السند');
     } finally {
       setLoading(false);

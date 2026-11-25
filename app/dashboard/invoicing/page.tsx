@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { CalendarDays, ChevronDown, ClipboardList, Minus, Plus, Printer, Search, Trash2, UserPlus, WalletCards, X } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-engine';
 
 type Product = {
   id: string;
@@ -106,7 +107,7 @@ export default function InvoicingPage() {
   };
 
   const saveInvoice = async (print = false) => {
-    if (!cart.length) return toast.error('أضف مادة واحدة على الأقل');
+    if (!cart.length) { soundEngine.playError(); return toast.error('أضف مادة واحدة على الأقل'); }
     if (payment === 'credit' && !selectedCustomer && !customer.name.trim()) return toast.error('اختر زبوناً للفاتورة الآجلة');
     setSaving(true);
     try {
@@ -127,9 +128,11 @@ export default function InvoicingPage() {
         if (result.error) throw result.error;
       }
       if (print) window.print();
+      soundEngine.playSuccess();
       toast.success('تم حفظ البيع وتحديث المخزون');
       setCart([]); setReceived(0); setDiscount(0); setShipping(0); setNotes('');
     } catch (error: any) {
+      soundEngine.playError();
       toast.error(`فشل حفظ الفاتورة: ${error.message}`);
     } finally { setSaving(false); }
   };

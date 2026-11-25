@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Minus, Trash2, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { soundEngine } from '@/lib/sound-engine';
 
 export default function POSPage() {
   const [cart, setCart] = useState<any[]>([]);
@@ -55,9 +56,11 @@ export default function POSPage() {
           .eq('product_id', item.id);
       }
 
+      soundEngine.playSuccess();
       toast.success('تم إتمام البيع بنجاح');
       setCart([]);
     } catch (e: any) {
+      soundEngine.playError();
       toast.error('خطأ: ' + e.message);
     }
   };
