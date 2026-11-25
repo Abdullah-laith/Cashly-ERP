@@ -3,6 +3,7 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import { Building2, Image as ImageIcon, Save, Upload } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { saveOrganizationSettings } from '@/lib/organization-settings';
 import { useOrganization, OrganizationSettings } from '@/components/organization-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,7 @@ export default function SettingsPage() {
       logoUrl = supabase.storage.from('company-logos').getPublicUrl(path).data.publicUrl;
     }
     const payload = { user_id: user.id, business_name: settings.business_name.trim(), org_name: settings.business_name.trim(), logo_url: logoUrl, sales_channel: settings.sales_channel, business_category: settings.business_category, business_phone: settings.business_phone.trim(), business_address: settings.business_address.trim(), address: settings.business_address.trim(), default_currency: settings.default_currency };
-    const { error } = await supabase.from('organization_settings').upsert(payload, { onConflict: 'user_id' });
+    const { error } = await saveOrganizationSettings(user.id, payload);
     if (error) setMessage(`تعذر حفظ الإعدادات: ${error.message}`); else { setMessage('تم حفظ بيانات المشروع بنجاح'); setLogo(null); await refreshOrganization(); }
     setSaving(false);
   };

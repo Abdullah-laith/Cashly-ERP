@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { saveOrganizationSettings } from '@/lib/organization-settings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,14 +43,13 @@ export default function LoginPage() {
     } else {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('organization_settings').upsert({
-          user_id: user.id,
+        await saveOrganizationSettings(user.id, {
           default_currency: 'IQD',
           onboarding_completed: false,
           trial_starts_at: new Date().toISOString(),
           trial_ends_at: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
           subscription_status: 'trial',
-        }, { onConflict: 'user_id', ignoreDuplicates: true });
+        });
       }
       setMessage({ type: 'success', text: 'تم تسجيل الدخول، جاري التحويل...' });
       window.location.href = '/dashboard';

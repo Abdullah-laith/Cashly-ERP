@@ -4,6 +4,7 @@ import { ChangeEvent, DragEvent, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Building2, Check, ImagePlus, MapPin, Store, Upload, Globe2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { saveOrganizationSettings } from '@/lib/organization-settings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,7 +51,7 @@ export default function OnboardingPage() {
       if (uploadError) { setError('تعذر رفع الشعار. تأكد من إنشاء bucket باسم company-logos'); setSaving(false); return; }
       logoUrl = supabase.storage.from('company-logos').getPublicUrl(path).data.publicUrl;
     }
-    const { error: saveError } = await supabase.from('organization_settings').upsert({ user_id: userId, business_name: form.businessName.trim(), org_name: form.businessName.trim(), sales_channel: form.channel, business_category: form.category, business_phone: form.businessPhone.trim(), business_address: form.address.trim(), address: form.address.trim(), ...(logoUrl ? { logo_url: logoUrl } : {}), onboarding_completed: true }, { onConflict: 'user_id' });
+    const { error: saveError } = await saveOrganizationSettings(userId, { business_name: form.businessName.trim(), org_name: form.businessName.trim(), sales_channel: form.channel, business_category: form.category, business_phone: form.businessPhone.trim(), business_address: form.address.trim(), address: form.address.trim(), ...(logoUrl ? { logo_url: logoUrl } : {}), onboarding_completed: true });
     if (saveError) { setError('تعذر حفظ بيانات المشروع: ' + saveError.message); setSaving(false); return; }
     window.location.href = '/dashboard';
   }
