@@ -68,8 +68,12 @@
 .dashboard-content .quick-action-inline:hover { background: rgba(51,65,85,.8); }
 .dashboard-content .metric-icon, .dashboard-content .quick-action-icon { border-color: #334155; }
 .dashboard-content .chart-sales-line { stroke: #10B981; stroke-width: 3; fill: none; }
-.dashboard-content .chart-gridline { stroke: #1E293B; }
-.dashboard-content .chart-axis-label { font-size: 10px; fill: #94A3B8; }
+.dashboard-content .chart-gridline { stroke: #243348; stroke-width: 1; stroke-dasharray: 3 7; }
+.dashboard-content .chart-axis-label { font-size: 11px; fill: #94A3B8; }
+.dashboard-content .chart-date-label { fill: #CBD5E1; font-size: 12px; font-weight: 700; }
+.dashboard-content .chart-sales-point { stroke: #0F1623; stroke-width: 2; fill: #F8FAFC; }
+.dashboard-content .chart-point-hit { cursor: crosshair; outline: none; }
+.dashboard-content .chart-point-hit:focus .chart-sales-point, .dashboard-content .chart-point-hit:hover .chart-sales-point { fill: #10B981; stroke: #D1FAE5; }
 .dashboard-content .chart-summary { display: flex; align-items: center; justify-content: space-between; padding-top: 1rem; border-top: 1px solid rgba(30,41,59,.8); color: #94A3B8; }
 .dashboard-content .chart-summary strong { color: #F8FAFC; }
 .dashboard-content .chart-summary-divider { color: #475569; }
