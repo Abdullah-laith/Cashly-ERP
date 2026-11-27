@@ -5,10 +5,14 @@ import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
+import { printReportPDF } from '@/lib/print-engine';
+import { useOrganization } from '@/components/organization-provider';
 
 export default function CashClosingPage() {
   const [report, setReport] = useState({ salesCash: 0, debtsCollected: 0, expenses: 0, netCash: 0 });
   const [loading, setLoading] = useState(true);
+  const { organization } = useOrganization();
+  const printReport = () => void printReportPDF({ title: 'تقفيل الصندوق اليومي', period: 'اليوم', organization, columns: [{ label: 'البند', key: 'label' }, { label: 'المبلغ', key: 'value', align: 'left' }], rows: [{ label: 'مبيعات نقدي', value: `${report.salesCash.toLocaleString('en-US')} د.ع` }, { label: 'ديون محصلة', value: `${report.debtsCollected.toLocaleString('en-US')} د.ع` }, { label: 'المصاريف', value: `${report.expenses.toLocaleString('en-US')} د.ع` }], totalLabel: 'صافي الصندوق', totalValue: `${report.netCash.toLocaleString('en-US')} د.ع` });
 
   useEffect(() => {
     fetchData();
@@ -52,7 +56,7 @@ export default function CashClosingPage() {
             <div className="flex justify-between py-2 border-b border-slate-200/80"><span>مبيعات نقدي:</span> <span className="font-bold text-[#10B981]">{report.salesCash.toLocaleString()} د.ع</span></div>
             <div className="flex justify-between py-2 border-b border-slate-200/80"><span>المصاريف:</span> <span className="font-bold text-[#EF4444]">{report.expenses.toLocaleString()} د.ع</span></div>
             <div className="flex justify-between py-2 text-xl font-bold"><span>صافي الصندوق:</span> <span className="text-slate-900">{report.netCash.toLocaleString()} د.ع</span></div>
-            <Button className="w-full bg-blue-600 mt-4"><Printer className="w-4 h-4 mr-2"/> طباعة التقرير</Button>
+            <Button onClick={printReport} className="w-full bg-blue-600 mt-4"><Printer className="w-4 h-4 mr-2"/> طباعة التقرير</Button>
           </CardContent>
         </Card>
       </div>

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast-provider';
 import { Badge } from '@/components/ui/badge';
 import { useOrganization } from '@/components/organization-provider';
-import { printInvoicePDF, type InvoiceData } from '@/lib/print-invoice';
+import { printInvoicePDF, printReportPDF, type InvoiceData, type ReportData } from '@/lib/print-engine';
 
 interface Product {
   name: string;
@@ -119,36 +119,38 @@ export default function SalesHistoryPage() {
     link.remove();
   };
 
-  const printSingleInvoice = (invoice: Invoice) => {
-    const subtotal = Number(invoice.subtotal_amount ?? invoice.total_amount ?? 0);
-    const discount = Number(invoice.discount_amount ?? 0);
-    const invoiceForPrint: InvoiceData = {
-      invoiceNumber: invoice.invoice_number || invoice.id.slice(0, 8),
-      createdAt: invoice.created_at,
-      customerName: invoice.customer_name || 'عميل نقدي',
-      customerPhone: invoice.customer_phone || undefined,
-      customerType: invoice.customer_type || 'in_store',
-      paymentType: invoice.payment_type === 'آجل' ? 'credit' : 'cash',
-      lines: (invoice.items || []).map(item => ({ name: item.name, qty: Number(item.quantity || 0), price: Number(item.price || 0) })),
-      subtotal,
-      discount: invoice.discount_mode === 'percent' && subtotal > 0 ? (discount / subtotal) * 100 : discount,
-      discountMode: invoice.discount_mode || 'amount',
-      shipping: Number(invoice.shipping_amount || 0),
-      total: Number(invoice.total_amount || 0),
-      currency: 'IQD',
-    };
-    void printInvoicePDF(invoiceForPrint, organization);
+  const loadInvoiceLines = async (invoice: Invoice) => {
+    const { data } = await supabase.from('invoice_items').select('product_id, quantity, price, products(name)').eq('invoice_id', invoice.id);
+    return (data || []).map((item: any) => {
+      const product = Array.isArray(item.products) ? item.products[0] : item.products;
+      return { name: product?.name || 'مبيعات عامة', qty: Number(item.quantity || 0), price: Number(item.price || 0) };
+    });
   };
 
-  const exportToPDF = () => {
-    const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character] || character));
+  const printSingleInvoice = async (invoice: Invoice) => {
+    const subtotal = Number(invoice.subtotal_amount ?? invoice.total_amount ?? 0);
+    const discount = Number(invoice.discount_amount ?? 0);
+    const lines = await loadInvoiceLines(invoice);
+    const invoiceForPrint: InvoiceData = {
+      invoiceNumber: invoice.invoice_number || invoice.id.slice(0, 8), createdAt: invoice.created_at,
+      customerName: invoice.customer_name || 'عميل نقدي', customerPhone: invoice.customer_phone || undefined,
+      customerType: invoice.customer_type || 'in_store', paymentType: invoice.payment_type === 'آجل' ? 'credit' : 'cash',
+      lines: lines.length ? lines : (invoice.items || []).map(item => ({ name: item.name, qty: Number(item.quantity || 0), price: Number(item.price || 0) })),
+      subtotal, discount: invoice.discount_mode === 'percent' && subtotal > 0 ? (discount / subtotal) * 100 : discount,
+      discountMode: invoice.discount_mode || 'amount', shipping: Number(invoice.shipping_amount || 0), total: Number(invoice.total_amount || 0), currency: 'IQD',
+    };
+    await printInvoicePDF(invoiceForPrint, organization);
+  };
+
+  const exportToPDF = async () => {
     const total = filteredInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount || 0), 0);
-    const rows = filteredInvoices.map(invoice => `<tr><td>${escapeHtml(new Date(invoice.created_at).toLocaleDateString('ar-IQ'))}</td><td>${escapeHtml(invoice.customer_name || '-')}</td><td>${Number(invoice.total_amount || 0).toLocaleString('ar-IQ')} د.ع</td></tr>`).join('');
-    const report = `<html dir="rtl"><head><meta charset="utf-8"><title>تقرير المبيعات</title><style>@page{margin:8mm}body{font-family:Arial,sans-serif;color:#000;background:#fff;direction:rtl}h1{text-align:center;margin:0 0 8px}p{text-align:center;margin:4px 0}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #000;padding:8px;text-align:right}th{background:#eee}.total{margin-top:16px;font-weight:bold}</style></head><body><h1>${escapeHtml(organization.business_name)}</h1><p>تقرير المبيعات</p><p>تاريخ الإنشاء: ${new Date().toLocaleDateString('ar-IQ')}</p><table><thead><tr><th>التاريخ</th><th>العميل</th><th>الإجمالي</th></tr></thead><tbody>${rows}</tbody></table><p class="total">المجموع الكلي: ${total.toLocaleString('ar-IQ')} د.ع</p><script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}</script></body></html>`;
-    const popup = window.open('', '_blank', 'width=900,height=700');
-    if (!popup) return showToast('تعذر فتح نافذة الطباعة، اسمح بالنوافذ المنبثقة أولاً');
-    popup.document.write(report);
-    popup.document.close();
+    const report: ReportData = {
+      title: 'تقرير المبيعات', period: selectedMonth ? `${selectedMonth.getFullYear()}/${String(selectedMonth.getMonth() + 1).padStart(2, '0')}` : 'كل الفترات', organization,
+      columns: [{ label: 'التاريخ', key: 'date' }, { label: 'العميل', key: 'customer' }, { label: 'الإجمالي', key: 'total', align: 'left' }],
+      rows: filteredInvoices.map(invoice => ({ date: new Date(invoice.created_at).toLocaleDateString('en-US'), customer: invoice.customer_name || '-', total: `${Number(invoice.total_amount || 0).toLocaleString('en-US')} د.ع` })),
+      totalLabel: 'المجموع الكلي', totalValue: `${total.toLocaleString('en-US')} د.ع`,
+    };
+    await printReportPDF(report);
   };
 
 

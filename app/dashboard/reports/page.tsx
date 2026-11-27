@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getReportsData, ReportPeriod, ReportPeriodSelection, ReportsData } from '@/lib/reports';
+import { printReportPDF, type ReportData } from '@/lib/print-engine';
+import { useOrganization } from '@/components/organization-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Printer, RefreshCw } from 'lucide-react';
@@ -24,6 +26,7 @@ export default function ReportsPage() {
   const [data, setData] = useState<ReportsData>(emptyData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { organization } = useOrganization();
 
   const loadReport = useCallback(async (nextSelection: ReportPeriodSelection) => {
     setLoading(true);
@@ -40,12 +43,21 @@ export default function ReportsPage() {
   }, [period, customStart, customEnd, loadReport]);
 
   const periodLabel = period === 'custom' ? `${dateLabel(customStart)} — ${dateLabel(customEnd)}` : periods.find(item => item.key === period)?.label;
+  const printReport = async () => {
+    const report: ReportData = {
+      title: 'مركز التقارير الشامل', period: periodLabel, organization,
+      summary: [['إجمالي المبيعات', data.sales], ['إجمالي المشتريات', data.purchases], ['المصاريف', data.expenses], ['صافي الربح', data.profit], ['ديون العملاء', data.receivables], ['عدد الفواتير', data.invoiceCount]].map(([label, value]) => ({ label: String(label), value: label === 'عدد الفواتير' ? Number(value).toLocaleString('en-US') : `${Number(value).toLocaleString('en-US')} د.ع` })),
+      columns: [{ label: 'المنتج', key: 'name' }, { label: 'الكمية', key: 'quantity', align: 'center' }, { label: 'قيمة المبيعات', key: 'sales', align: 'left' }],
+      rows: data.topProducts.map(product => ({ name: product.name, quantity: Number(product.quantity).toLocaleString('en-US'), sales: `${Number(product.sales).toLocaleString('en-US')} د.ع` })),
+    };
+    await printReportPDF(report);
+  };
 
   return (
     <div dir="rtl" className="reports-page space-y-6 p-6">
       <div className="no-print flex flex-wrap items-center justify-between gap-4">
         <div><h1 className="text-2xl font-bold">مركز التقارير الشامل</h1><p className="mt-1 text-sm text-muted-foreground">احسب النتائج مباشرة من الفواتير والمشتريات والمصاريف الفعلية.</p></div>
-        <div className="flex gap-2"><Button variant="outline" onClick={() => loadReport(period === 'custom' ? { startDate: customStart, endDate: customEnd } : period)} disabled={loading}><RefreshCw className="ml-2 h-4 w-4" /> تحديث</Button><Button onClick={() => window.print()}><Printer className="ml-2 h-4 w-4" /> طباعة التقرير / PDF</Button></div>
+        <div className="flex gap-2"><Button variant="outline" onClick={() => loadReport(period === 'custom' ? { startDate: customStart, endDate: customEnd } : period)} disabled={loading}><RefreshCw className="ml-2 h-4 w-4" /> تحديث</Button><Button onClick={() => void printReport()}><Printer className="ml-2 h-4 w-4" /> طباعة التقرير / PDF</Button></div>
       </div>
       <section className="no-print report-period-panel" aria-label="اختيار فترة التقرير">
         <div className="report-period-heading"><div><p className="report-period-eyebrow">عرض البيانات حسب</p><h2>الفترة الزمنية</h2></div><CalendarDays aria-hidden="true" /></div>
