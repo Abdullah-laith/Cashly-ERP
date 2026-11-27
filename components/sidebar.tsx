@@ -105,8 +105,8 @@ export default function Sidebar({ settings, onNavigate }: { settings?: any; onNa
         ))}
       </div>
       <div className="mt-auto space-y-3 pt-5">
-        {trialDaysRemaining !== null && <a href="/dashboard/settings" className="block rounded-2xl bg-slate-900 p-3.5 text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5" aria-label={`الباقة التجريبية، متبقي ${trialDaysRemaining} أيام`}>
-          <div className="flex items-start gap-2.5"><Crown className="mt-0.5 h-5 w-5 shrink-0 text-orange-400" /><div className="min-w-0 flex-1"><p className="text-sm font-bold">الباقة التجريبية</p><p className="mt-1 text-xs text-slate-300">متبقي {trialDaysRemaining} أيام</p><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-700"><span className="block h-full rounded-full bg-orange-400 transition-all duration-300" style={{ width: `${Math.min(100, Math.max(0, trialDaysRemaining / 10 * 100))}%` }} /></div></div></div>
+        {trialDaysRemaining !== null && <a href="/dashboard/settings" className="block rounded-xl border border-orange-200/80 bg-orange-50/90 px-3 py-2 shadow-sm transition-transform duration-200 hover:-translate-y-0.5" aria-label={`الباقة التجريبية، متبقي ${trialDaysRemaining} أيام`}>
+          <div className="flex items-center gap-2"><Crown className="h-3.5 w-3.5 shrink-0 text-orange-500" /><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="truncate text-xs font-semibold text-orange-900">الباقة التجريبية</p><p className="shrink-0 text-xs text-orange-600">متبقي {trialDaysRemaining} أيام</p></div><div className="mt-1 h-1 overflow-hidden rounded-full bg-orange-200/70"><span className="block h-full rounded-full bg-orange-500 transition-all duration-300" style={{ width: `${Math.min(100, Math.max(0, trialDaysRemaining / 10 * 100))}%` }} /></div></div></div>
         </a>}
         <button onClick={handleLogout} className="sidebar-link sidebar-logout flex w-full items-center gap-3 px-3.5 py-3 text-slate-500">
           <LogOut className="w-5 h-5" /> تسجيل الخروج

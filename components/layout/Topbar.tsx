@@ -50,8 +50,8 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   }, []);
 
   return (
-    <header className="topbar sticky top-0 z-40 flex items-center justify-between px-6">
-      <div className="flex items-center gap-4">
+    <header className="topbar sticky top-0 z-40 flex items-center px-6">
+      <div className="flex w-full items-center justify-end gap-4">
                 {onMenuClick && <button type="button" aria-label="فتح القائمة" title="القائمة" onClick={onMenuClick} className="icon-button mobile-menu-button"><Menu className="w-5 h-5" /></button>}
         <SoundToggle />
         <div className="relative" ref={box}>

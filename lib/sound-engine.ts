@@ -44,13 +44,28 @@ function tone(
   oscillator.stop(start + duration + 0.02);
 }
 
-function play(name: SoundName) {
+function playTap() {
   if (!enabled) return;
   const context = getContext();
   if (!context) return;
   const start = context.currentTime + 0.001;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(1100, start);
+  oscillator.frequency.exponentialRampToValueAtTime(450, start + 0.014);
+  gain.gain.setValueAtTime(0.06, start);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + 0.014);
+  oscillator.connect(gain).connect(masterGain || context.destination);
+  oscillator.start(start);
+  oscillator.stop(start + 0.034);
+}
 
-  if (name === 'tap') tone(180, start, 0.055, 0.045, 'sine');
+function play(name: Exclude<SoundName, 'tap'>) {
+  if (!enabled) return;
+  const context = getContext();
+  if (!context) return;
+  const start = context.currentTime + 0.001;
   if (name === 'toggle') {
     tone(390, start, 0.075, 0.032, 'sine');
     tone(560, start + 0.025, 0.09, 0.022, 'sine');
@@ -66,7 +81,7 @@ function play(name: SoundName) {
 }
 
 export const soundEngine = {
-  playTap: () => play('tap'),
+  playTap,
   playToggle: () => play('toggle'),
   playSuccess: () => play('success'),
   playError: () => play('error'),
