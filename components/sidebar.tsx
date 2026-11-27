@@ -1,13 +1,14 @@
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ShoppingCart, Users, Boxes, Receipt,
-  Wallet, Percent, BookOpen, UserShield, Printer, BarChart3, Settings,
-  LogOut, ChevronDown, X
+  Wallet, UserShield, BarChart3, Settings,
+  LogOut, ChevronDown, X, Crown
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useState } from 'react';
 import { useOrganization } from '@/components/organization-provider';
+import { Icon3D } from '@/components/ui/Icon3D';
 
 const menuItems = [
   { name: 'لوحة التحكم', path: '/dashboard', icon: LayoutDashboard },
@@ -33,8 +34,6 @@ const menuItems = [
       { name: 'سند جديد', path: '/dashboard/finance/vouchers/new' }
     ]
   },
-  { name: 'إدارة التقسيط', icon: Percent, path: '/dashboard/installments' },
-  { name: 'الحسابات العامة', icon: BookOpen, path: '/dashboard/accounting' },
   { name: 'المستخدمون', icon: UserShield, path: '/dashboard/users' },
   {
     name: 'التقارير', icon: BarChart3, children: [
@@ -67,24 +66,23 @@ export default function Sidebar({ settings, onNavigate }: { settings?: any; onNa
   };
 
   return (
-    <nav className="sidebar-glass w-64 text-white flex flex-col h-screen overflow-y-auto p-4">
+    <nav className="sidebar-glass flex h-screen w-64 flex-col overflow-y-auto p-4">
       <div className="brand-lockup mb-5 gap-2.5 px-4">
-        {organization.logo_url ? <img src={organization.logo_url} alt="شعار المشروع" className="h-9 w-9 rounded-xl object-cover" /> : <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 font-bold text-emerald-400">C</span>}
-        <span className="min-w-0 text-xl font-bold"><span className="block truncate">{organization.business_name || 'Cashly'}</span><em className="block text-xs">ERP</em></span>
+        {organization.logo_url ? <img src={organization.logo_url} alt="شعار المشروع" className="h-9 w-9 rounded-xl object-cover" /> : <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-xl border border-orange-200 bg-orange-50 font-bold text-orange-700 shadow-sm">C</span>}
+        <span className="min-w-0 text-xl font-bold text-slate-900"><span className="block truncate">{organization.business_name || 'Cashly'}</span><em className="block text-xs">ERP</em></span>
         {onNavigate && <button type="button" aria-label="إغلاق القائمة" onClick={onNavigate} className="icon-button mobile-sidebar-close mr-auto"><X className="h-4 w-4" /></button>}
       </div>
-      {trialDaysRemaining !== null && <a href="/dashboard/settings" className="mb-5 block rounded-xl border border-emerald-400/15 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-200">تجربة مجانية: متبقي {trialDaysRemaining} أيام</a>}
-      <div className="space-y-1">
+      <div className="sidebar-nav-list flex flex-col gap-1.5">
         {menuItems.map((item) => (
           <div key={item.name}>
             {item.children ? (
               <div>
                 <button
                   onClick={() => toggleAccordion(item.name)}
-                  className={cn("sidebar-link flex w-full items-center justify-between px-4 py-3")}
+                  className={cn("sidebar-link flex w-full items-center justify-between gap-3 px-3.5 py-3")}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="nav-icon"><item.icon className="w-4 h-4 text-sky-200" /></span> {item.name}
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <Icon3D icon={item.icon} tone="orange" size="sm" /> <span className="truncate">{item.name}</span>
                   </div>
                   <ChevronDown className={cn("w-4 h-4 transition-transform", openItems.includes(item.name) ? "rotate-180" : "")} />
                 </button>
@@ -99,16 +97,21 @@ export default function Sidebar({ settings, onNavigate }: { settings?: any; onNa
                 )}
               </div>
             ) : (
-              <a href={item.path} onClick={onNavigate} className={cn("sidebar-link flex items-center gap-3 px-4 py-3", pathname === item.path ? "is-active font-medium" : "")}>
-                <span className="nav-icon"><item.icon className="w-4 h-4" /></span> {item.name}
+              <a href={item.path} onClick={onNavigate} className={cn("sidebar-link flex items-center gap-3 px-3.5 py-3", pathname === item.path ? "is-active font-medium" : "")}>
+                <Icon3D icon={item.icon} tone="orange" size="sm" /> <span className="truncate">{item.name}</span>
               </a>
             )}
           </div>
         ))}
       </div>
-      <button onClick={handleLogout} className="sidebar-link mt-auto flex items-center gap-3 px-4 py-3 text-slate-400">
-        <LogOut className="w-5 h-5" /> تسجيل الخروج
-      </button>
+      <div className="mt-auto space-y-3 pt-5">
+        {trialDaysRemaining !== null && <a href="/dashboard/settings" className="block rounded-2xl bg-slate-900 p-3.5 text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5" aria-label={`الباقة التجريبية، متبقي ${trialDaysRemaining} أيام`}>
+          <div className="flex items-start gap-2.5"><Crown className="mt-0.5 h-5 w-5 shrink-0 text-orange-400" /><div className="min-w-0 flex-1"><p className="text-sm font-bold">الباقة التجريبية</p><p className="mt-1 text-xs text-slate-300">متبقي {trialDaysRemaining} أيام</p><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-700"><span className="block h-full rounded-full bg-orange-400 transition-all duration-300" style={{ width: `${Math.min(100, Math.max(0, trialDaysRemaining / 10 * 100))}%` }} /></div></div></div>
+        </a>}
+        <button onClick={handleLogout} className="sidebar-link sidebar-logout flex w-full items-center gap-3 px-3.5 py-3 text-slate-500">
+          <LogOut className="w-5 h-5" /> تسجيل الخروج
+        </button>
+      </div>
     </nav>
   );
 }

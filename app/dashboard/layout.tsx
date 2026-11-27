@@ -32,12 +32,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchData().finally(() => setCheckingOnboarding(false));
   }, []);
 
-  if (checkingOnboarding) return <div className="grid min-h-screen place-items-center bg-[#101a27] text-slate-300" dir="rtl">جاري التحقق من إعداد مشروعك...</div>;
+  if (checkingOnboarding) return <div className="grid min-h-screen place-items-center bg-[#F8FAFC] text-slate-500" dir="rtl">جاري التحقق من إعداد مشروعك...</div>;
 
   return (
     <OrganizationProvider>
       <GlobalSoundProvider>
-      <div className="dashboard-shell min-h-screen bg-[#070B14] text-slate-50">
+      <div className="dashboard-shell min-h-screen bg-[#F8FAFC] text-[#0F172A]">
         <aside className="sidebar-slot hidden md:flex">
           <Sidebar />
         </aside>

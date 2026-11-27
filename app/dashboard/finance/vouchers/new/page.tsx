@@ -30,7 +30,7 @@ export default function AddVoucherPage({ type }: { type: 'expense' | 'receipt' }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-4 max-w-2xl bg-slate-900/60 rounded-xl border border-slate-800">
+    <form onSubmit={handleSubmit} className="p-6 space-y-4 max-w-2xl bg-white rounded-xl border border-slate-200/80">
       <h2 className="text-xl font-bold mb-4">{type === 'expense' ? 'سند صرف جديد' : 'سند قبض جديد'}</h2>
       <Input type="number" placeholder="المبلغ" required />
       <Input placeholder="البيان / الوصف" />

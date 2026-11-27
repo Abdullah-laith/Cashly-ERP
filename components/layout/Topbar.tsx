@@ -1,5 +1,5 @@
 'use client';
-import { Bell, Menu, Sun, Moon, User, AlertTriangle, CreditCard } from 'lucide-react';
+import { Bell, Menu, User, AlertTriangle, CreditCard } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -11,30 +11,11 @@ type Notice = { id: string; text: string; href: string; kind: 'stock' | 'debt' }
 export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter();
   const { organization, trialDaysRemaining } = useOrganization();
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [open, setOpen] = useState(false);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const box = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const theme = document.documentElement.dataset.theme || (localStorage.getItem('theme') === 'light' ? 'light' : 'dark');
-    setIsDarkMode(theme !== 'light');
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.classList.toggle('light', theme === 'light');
-    document.documentElement.classList.toggle('dark', theme !== 'light');
-    document.documentElement.classList.add('theme-ready');
-  }, []);
-
-  const toggleTheme = () => {
-    const nextTheme = isDarkMode ? 'light' : 'dark';
-    setIsDarkMode(nextTheme === 'dark');
-    document.documentElement.dataset.theme = nextTheme;
-    document.documentElement.classList.toggle('light', nextTheme === 'light');
-    document.documentElement.classList.toggle('dark', nextTheme === 'dark');
-    localStorage.setItem('theme', nextTheme);
-  };
 
   const loadNotices = async () => {
     const list: Notice[] = [];
@@ -69,14 +50,10 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   }, []);
 
   return (
-    <header className="topbar sticky top-0 z-40 flex items-center justify-between px-6 text-white">
+    <header className="topbar sticky top-0 z-40 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        {trialDaysRemaining !== null && <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200 sm:inline-flex">تجربة: {trialDaysRemaining} يوم</span>}
-        {onMenuClick && <button type="button" aria-label="فتح القائمة" title="القائمة" onClick={onMenuClick} className="icon-button mobile-menu-button"><Menu className="w-5 h-5" /></button>}
+                {onMenuClick && <button type="button" aria-label="فتح القائمة" title="القائمة" onClick={onMenuClick} className="icon-button mobile-menu-button"><Menu className="w-5 h-5" /></button>}
         <SoundToggle />
-        <button aria-label="تبديل الوضع" title={isDarkMode ? 'الوضع الفاتح' : 'الوضع الداكن'} onClick={toggleTheme} className="icon-button">
-          {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
         <div className="relative" ref={box}>
           <button
             aria-label="الإشعارات"
@@ -93,8 +70,8 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           </button>
           {open && (
             <div className="glass-popover absolute left-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-2xl z-50">
-              <div className="px-4 py-3 border-b border-slate-700 font-bold text-sm">الإشعارات</div>
-              {notices.length === 0 && <div className="px-4 py-6 text-sm text-slate-400 text-center">لا توجد إشعارات</div>}
+              <div className="px-4 py-3 border-b border-slate-200/80 font-bold text-sm">الإشعارات</div>
+              {notices.length === 0 && <div className="px-4 py-6 text-sm text-slate-500 text-center">لا توجد إشعارات</div>}
               {notices.map((n) => (
                 <button
                   key={n.id}
@@ -102,7 +79,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                     setOpen(false);
                     router.push(n.href);
                   }}
-                  className="w-full flex items-start gap-3 px-4 py-3 text-right text-sm hover:bg-slate-800 border-b border-slate-800 last:border-0"
+                  className="w-full flex items-start gap-3 px-4 py-3 text-right text-sm text-slate-800 hover:bg-orange-50 border-b border-slate-100 last:border-0"
                 >
                   {n.kind === 'stock' ? <AlertTriangle className="w-4 h-4 mt-0.5 text-amber-500 shrink-0" /> : <CreditCard className="w-4 h-4 mt-0.5 text-rose-500 shrink-0" />}
                   <span>{n.text}</span>
@@ -111,10 +88,10 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3 pl-2 border-l border-slate-800">
+        <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
           <div className="text-right">
-            <div className="text-sm font-medium">{organization.business_name || name || '...'}</div>
-            <div className="text-xs text-slate-400">{role}</div>
+            <div className="text-sm font-medium text-slate-900">{organization.business_name || name || '...'}</div>
+            <div className="text-xs text-slate-500">{role}</div>
           </div>
           <div className="avatar-glass flex h-9 w-9 items-center justify-center rounded-full">
             <User className="w-5 h-5" />

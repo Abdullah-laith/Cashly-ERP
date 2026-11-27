@@ -5,11 +5,14 @@ export type Customer = {
   name: string;
   phone: string | null;
   address: string | null;
+  governorate: string | null;
+  customer_type: 'online' | 'in_store' | null;
+  customer_channel?: 'online' | 'store' | null;
   balance: number | null;
   created_at: string;
 };
 
-export type CustomerInput = Pick<Customer, 'name' | 'phone' | 'address'>;
+export type CustomerInput = Pick<Customer, 'name' | 'phone' | 'address' | 'governorate' | 'customer_type'>;
 
 export async function getCustomers(): Promise<Customer[]> {
   const { data, error } = await supabase.from('customers').select('*').order('created_at', { ascending: false });

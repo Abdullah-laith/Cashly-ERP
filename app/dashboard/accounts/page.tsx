@@ -58,22 +58,22 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="p-8 space-y-6 bg-[#0F172A] min-h-screen text-slate-100">
-      <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 w-fit">
-        <button className={`px-6 py-2 rounded-lg transition-all ${activeTab === 'debts' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`} onClick={() => setActiveTab('debts')}>سجل الديون</button>
-        <button className={`px-6 py-2 rounded-lg transition-all ${activeTab === 'expenses' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`} onClick={() => setActiveTab('expenses')}>المصاريف التشغيلية</button>
+    <div className="p-8 space-y-6 bg-[#F3F5F9] min-h-screen text-slate-900">
+      <div className="flex bg-white p-1 rounded-xl border border-slate-200/80 w-fit">
+        <button className={`px-6 py-2 rounded-lg transition-all ${activeTab === 'debts' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md' : 'text-slate-500'}`} onClick={() => setActiveTab('debts')}>سجل الديون</button>
+        <button className={`px-6 py-2 rounded-lg transition-all ${activeTab === 'expenses' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md' : 'text-slate-500'}`} onClick={() => setActiveTab('expenses')}>المصاريف التشغيلية</button>
       </div>
 
       {activeTab === 'debts' ? (
         <div className="space-y-6">
-          <Card className="bg-[#1E293B] border-slate-700 w-fit"><CardHeader className="pb-2"><CardTitle className="text-sm text-slate-400">إجمالي الديون لنا</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-[#FF6B5B]">{debts.reduce((s,d) => s + d.remaining_debt, 0).toLocaleString()} د.ع</p></CardContent></Card>
-          <Input className="bg-[#1E293B] border-slate-700 max-w-sm" placeholder="بحث بالاسم أو الهاتف..." onChange={e => setSearchTerm(e.target.value)} />
-          <Table className="bg-[#1E293B] border border-slate-700 rounded-xl">
-            <TableHeader><TableRow className="border-slate-700 hover:bg-transparent"><TableHead>الزبون</TableHead><TableHead>المتبقي</TableHead><TableHead className="text-center">إجراءات</TableHead></TableRow></TableHeader>
+          <Card className="bg-white border-slate-200/80 w-fit"><CardHeader className="pb-2"><CardTitle className="text-sm text-slate-500">إجمالي الديون لنا</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-[#FF6B5B]">{debts.reduce((s,d) => s + d.remaining_debt, 0).toLocaleString()} د.ع</p></CardContent></Card>
+          <Input className="bg-white border-slate-200/80 max-w-sm" placeholder="بحث بالاسم أو الهاتف..." onChange={e => setSearchTerm(e.target.value)} />
+          <Table className="bg-white border border-slate-200/80 rounded-xl">
+            <TableHeader><TableRow className="border-slate-200/80 hover:bg-transparent"><TableHead>الزبون</TableHead><TableHead>المتبقي</TableHead><TableHead className="text-center">إجراءات</TableHead></TableRow></TableHeader>
             <TableBody>
               {debts.filter(d => d.customer_name.includes(searchTerm)).map(d => (
-                <TableRow key={d.id} className="border-slate-700 hover:bg-slate-800">
-                  <TableCell>{d.customer_name}<br/><span className="text-xs text-slate-400">{d.customer_phone}</span></TableCell>
+                <TableRow key={d.id} className="border-slate-200/80 hover:bg-slate-50">
+                  <TableCell>{d.customer_name}<br/><span className="text-xs text-slate-500">{d.customer_phone}</span></TableCell>
                   <TableCell className="font-bold text-[#FF6B5B]">{d.remaining_debt.toLocaleString()} د.ع</TableCell>
                   <TableCell className="flex justify-center gap-2">
                     <Button size="sm" variant="secondary" onClick={() => settleDebt(d.id, d.remaining_debt)}>تسديد</Button>
@@ -86,8 +86,8 @@ export default function AccountsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <Card className="bg-[#1E293B] border-slate-700 w-fit"><CardHeader className="pb-2"><CardTitle className="text-sm text-slate-400">إجمالي المصاريف</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-[#EF4444]">{expenses.reduce((s,e) => s + Number(e.amount), 0).toLocaleString()} د.ع</p></CardContent></Card>
-          <Card className="bg-[#1E293B] border-slate-700 p-6 space-y-4">
+          <Card className="bg-white border-slate-200/80 w-fit"><CardHeader className="pb-2"><CardTitle className="text-sm text-slate-500">إجمالي المصاريف</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-[#EF4444]">{expenses.reduce((s,e) => s + Number(e.amount), 0).toLocaleString()} د.ع</p></CardContent></Card>
+          <Card className="bg-white border-slate-200/80 p-6 space-y-4">
             <div className="flex gap-2">
               <Input placeholder="عنوان المصروف" value={newExpense.title} onChange={e => setNewExpense({...newExpense, title: e.target.value})} />
               <Input type="number" placeholder="المبلغ (د.ع)" value={newExpense.amount} onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value)})} />
@@ -95,11 +95,11 @@ export default function AccountsPage() {
               <Button onClick={addExpense} className="bg-blue-600"><Plus className="w-4 h-4 mr-2"/> تسجيل</Button>
             </div>
           </Card>
-          <Table className="bg-[#1E293B] border border-slate-700 rounded-xl">
-            <TableHeader><TableRow className="border-slate-700"><TableHead>العنوان</TableHead><TableHead>التاريخ</TableHead><TableHead>المبلغ</TableHead><TableHead>إجراءات</TableHead></TableRow></TableHeader>
+          <Table className="bg-white border border-slate-200/80 rounded-xl">
+            <TableHeader><TableRow className="border-slate-200/80"><TableHead>العنوان</TableHead><TableHead>التاريخ</TableHead><TableHead>المبلغ</TableHead><TableHead>إجراءات</TableHead></TableRow></TableHeader>
             <TableBody>
               {expenses.map(e => (
-                <TableRow key={e.id} className="border-slate-700">
+                <TableRow key={e.id} className="border-slate-200/80">
                   <TableCell>{e.title}</TableCell>
                   <TableCell>{new Date(e.created_at).toLocaleDateString('ar-IQ')}</TableCell>
                   <TableCell className="font-bold">{Number(e.amount).toLocaleString()} د.ع</TableCell>

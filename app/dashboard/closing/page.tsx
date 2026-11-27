@@ -42,16 +42,16 @@ export default function CashClosingPage() {
   };
 
   return (
-    <div className="p-8 space-y-6 bg-[#0F172A] min-h-screen text-slate-100">
+    <div className="p-8 space-y-6 bg-[#F3F5F9] min-h-screen text-slate-900">
       <h1 className="text-3xl font-bold">تقفيل الصندوق اليومي</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-[#1E293B] border-slate-700">
+        <Card className="bg-white border-slate-200/80">
           <CardHeader><CardTitle>ملخص الحركة النقدية لهذا اليوم</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between py-2 border-b border-slate-700"><span>مبيعات نقدي:</span> <span className="font-bold text-[#10B981]">{report.salesCash.toLocaleString()} د.ع</span></div>
-            <div className="flex justify-between py-2 border-b border-slate-700"><span>المصاريف:</span> <span className="font-bold text-[#EF4444]">{report.expenses.toLocaleString()} د.ع</span></div>
-            <div className="flex justify-between py-2 text-xl font-bold"><span>صافي الصندوق:</span> <span className="text-white">{report.netCash.toLocaleString()} د.ع</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-200/80"><span>مبيعات نقدي:</span> <span className="font-bold text-[#10B981]">{report.salesCash.toLocaleString()} د.ع</span></div>
+            <div className="flex justify-between py-2 border-b border-slate-200/80"><span>المصاريف:</span> <span className="font-bold text-[#EF4444]">{report.expenses.toLocaleString()} د.ع</span></div>
+            <div className="flex justify-between py-2 text-xl font-bold"><span>صافي الصندوق:</span> <span className="text-slate-900">{report.netCash.toLocaleString()} د.ع</span></div>
             <Button className="w-full bg-blue-600 mt-4"><Printer className="w-4 h-4 mr-2"/> طباعة التقرير</Button>
           </CardContent>
         </Card>
