@@ -150,7 +150,12 @@ export default function InvoicingPage() {
         invoice_number: invoiceNumber, customer_id: selectedCustomer?.id || null,
         customer_name: selectedCustomer?.name || customer.name || 'عميل نقدي', customer_phone: selectedCustomer?.phone || customer.phone,
         total_amount: total, payment_type: payment, remaining_debt: payment === 'cash' ? 0 : due,
-        created_at: `${invoiceDate}T${new Date().toTimeString().slice(0, 8)}`,
+        created_at: (() => {
+          const selected = invoiceDate ? new Date(`${invoiceDate}T00:00:00`) : new Date();
+          const current = new Date();
+          if (invoiceDate === today()) selected.setHours(current.getHours(), current.getMinutes(), current.getSeconds(), current.getMilliseconds());
+          return selected.toISOString();
+        })(),
         notes,
       };
       payload.customer_type = customerType;
@@ -195,7 +200,7 @@ export default function InvoicingPage() {
     } catch (error: any) {
       soundEngine.playError();
       const message = error?.code === 'PGRST202'
-        ? 'دالة حفظ الفاتورة غير مفعّلة في قاعدة البيانات. طبّق migration create_invoice_with_stock ثم أعد المحاولة.'
+        ? 'قاعدة البيانات لا تحتوي دالة حفظ الفاتورة بالمخزن المحدد. طبّق migration 20261128_invoice_warehouse_rpc ثم أعد المحاولة.'
         : `فشل حفظ الفاتورة: ${error?.message || 'خطأ غير معروف'}`;
       toast.error(message);
     } finally { setSaving(false); }

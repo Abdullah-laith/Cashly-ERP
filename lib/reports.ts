@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-export type ReportPeriod = 'today' | 'week' | 'month' | 'all';
+export type ReportPeriod = 'today' | 'week' | 'month' | 'year' | 'all';
 export type CustomReportPeriod = { startDate: string; endDate: string };
 export type ReportPeriodSelection = ReportPeriod | CustomReportPeriod;
 
@@ -33,6 +33,10 @@ function periodRange(period: ReportPeriodSelection) {
   if (period === 'month') {
     start.setHours(0, 0, 0, 0);
     start.setDate(1);
+  }
+  if (period === 'year') {
+    start.setHours(0, 0, 0, 0);
+    start.setMonth(0, 1);
   }
   const end = new Date(now);
   end.setHours(23, 59, 59, 999);

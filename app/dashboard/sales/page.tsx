@@ -11,6 +11,8 @@ import { useToast } from '@/components/ui/toast-provider';
 import { Badge } from '@/components/ui/badge';
 import { useOrganization } from '@/components/organization-provider';
 import { printInvoicePDF, printReportPDF, type InvoiceData, type ReportData } from '@/lib/print-engine';
+import { PeriodNavigator, createPeriodSelection, periodRange, type PeriodSelection } from '@/components/ui/PeriodNavigator';
+import { formatBaghdadDateTime } from '@/lib/date-format';
 
 interface Product {
   name: string;
@@ -42,21 +44,19 @@ export default function SalesHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
+  const [periodSelection, setPeriodSelection] = useState<PeriodSelection>(() => createPeriodSelection());
 
   useEffect(() => {
-    setSelectedMonth(new Date());
     const q0 = new URLSearchParams(window.location.search).get('q');
     if (q0) setSearchTerm(q0);
   }, []);
 
   const fetchInvoices = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('invoices')
-      .select('*')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+    const range = periodRange(periodSelection);
+    let query = supabase.from('invoices').select('*').is('deleted_at', null).order('created_at', { ascending: false });
+    if (range) query = query.gte('created_at', range.start.toISOString()).lte('created_at', range.end.toISOString());
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching invoices:', error);
@@ -67,8 +67,8 @@ export default function SalesHistoryPage() {
   };
 
   useEffect(() => {
-    fetchInvoices();
-  }, []);
+    void fetchInvoices();
+  }, [periodSelection]);
 
   const deleteInvoice = async (id: string) => {
     try {
@@ -95,16 +95,8 @@ export default function SalesHistoryPage() {
     const invDate = new Date(inv.created_at);
     const matchesSearch = inv.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          Boolean(inv.customer_phone?.includes(searchTerm));
-    const matchesMonth = !selectedMonth || (invDate.getMonth() === selectedMonth.getMonth() && invDate.getFullYear() === selectedMonth.getFullYear());
-    return matchesSearch && matchesMonth;
-  }), [invoices, searchTerm, selectedMonth]);
-
-  const changeMonth = (offset: number) => {
-    if (!selectedMonth) return;
-    const newDate = new Date(selectedMonth);
-    newDate.setMonth(newDate.getMonth() + offset);
-    setSelectedMonth(newDate);
-  };
+    return matchesSearch;
+  }), [invoices, searchTerm]);
 
   const exportToCSV = () => {
     const csvContent = "data:text/csv;charset=utf-8," +
@@ -145,7 +137,7 @@ export default function SalesHistoryPage() {
   const exportToPDF = async () => {
     const total = filteredInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount || 0), 0);
     const report: ReportData = {
-      title: 'تقرير المبيعات', period: selectedMonth ? `${selectedMonth.getFullYear()}/${String(selectedMonth.getMonth() + 1).padStart(2, '0')}` : 'كل الفترات', organization,
+      title: 'تقرير المبيعات', period: periodSelection.mode === 'all' ? 'كل الفترات' : periodSelection.mode === 'daily' ? periodSelection.date : periodSelection.mode === 'monthly' ? periodSelection.month : periodSelection.mode === 'yearly' ? String(periodSelection.year) : `${periodSelection.startDate} — ${periodSelection.endDate}`, organization,
       columns: [{ label: 'التاريخ', key: 'date' }, { label: 'العميل', key: 'customer' }, { label: 'الإجمالي', key: 'total', align: 'left' }],
       rows: filteredInvoices.map(invoice => ({ date: new Date(invoice.created_at).toLocaleDateString('en-US'), customer: invoice.customer_name || '-', total: `${Number(invoice.total_amount || 0).toLocaleString('en-US')} د.ع` })),
       totalLabel: 'المجموع الكلي', totalValue: `${total.toLocaleString('en-US')} د.ع`,
@@ -156,16 +148,9 @@ export default function SalesHistoryPage() {
 
   return (
     <div className="p-8 space-y-6 bg-transparent min-h-screen text-slate-900">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <h1 className="text-2xl font-bold text-slate-900">سجل المبيعات</h1>
-        <div className="flex items-center gap-2">
-           <Button variant="outline" onClick={() => changeMonth(-1)}><ChevronLeft className="w-4 h-4"/></Button>
-           <span className="font-bold">{selectedMonth ? `${selectedMonth.getFullYear()}/${(selectedMonth.getMonth() + 1).toString().padStart(2, '0')}` : '...'}</span>
-           <Button variant="outline" onClick={() => changeMonth(1)}><ChevronRight className="w-4 h-4"/></Button>
-           <Button variant="outline" onClick={() => setSelectedMonth(null as any)}>عرض الكل</Button>
-           <Button variant="outline" onClick={exportToCSV} title="تحميل CSV"><Download className="w-4 h-4" /></Button>
-           <Button variant="outline" onClick={exportToPDF}><FileText className="w-4 h-4" /> تحميل الكل PDF</Button>
-        </div>
+        <div className="flex flex-wrap items-center gap-2"><Button variant="outline" onClick={exportToCSV} title="تحميل CSV"><Download className="w-4 h-4" /></Button><Button variant="outline" onClick={exportToPDF}><FileText className="w-4 h-4" /> تحميل PDF</Button></div>
         <div className="relative w-64">
 
           <Search className="absolute right-3 top-3 w-4 h-4 text-slate-500" />
@@ -177,6 +162,7 @@ export default function SalesHistoryPage() {
           />
         </div>
       </div>
+      <PeriodNavigator value={periodSelection} onChange={setPeriodSelection} />
 
       <Card className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xl">
         <CardContent className="p-0">
@@ -197,7 +183,7 @@ export default function SalesHistoryPage() {
               <TableBody>
                 {filteredInvoices.map((inv) => (
                   <TableRow key={inv.id} className="border-slate-200/80 hover:hover:bg-slate-50">
-                    <TableCell className="text-right px-4 py-3.5 text-sm">{new Date(inv.created_at).toISOString().split('T')[0].replace(/-/g, '/')}</TableCell>
+                    <TableCell className="text-right px-4 py-3.5 text-sm"><span className="block">{formatBaghdadDateTime(inv.created_at).date}</span><span className="mt-1 block text-xs text-slate-500">{formatBaghdadDateTime(inv.created_at).time}</span></TableCell>
                     <TableCell className="text-right px-4 py-3.5 font-medium">{inv.customer_name}</TableCell>
                     <TableCell className="text-right px-4 py-3.5">
                       <div className="flex flex-wrap gap-1">

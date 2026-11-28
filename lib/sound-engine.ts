@@ -49,16 +49,8 @@ function playTap() {
   const context = getContext();
   if (!context) return;
   const start = context.currentTime + 0.001;
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(1100, start);
-  oscillator.frequency.exponentialRampToValueAtTime(450, start + 0.014);
-  gain.gain.setValueAtTime(0.06, start);
-  gain.gain.exponentialRampToValueAtTime(0.001, start + 0.014);
-  oscillator.connect(gain).connect(masterGain || context.destination);
-  oscillator.start(start);
-  oscillator.stop(start + 0.034);
+  tone(1750, start, 0.035, 0.028, 'triangle', -20);
+  tone(820, start + 0.004, 0.045, 0.018, 'sine');
 }
 
 function play(name: Exclude<SoundName, 'tap'>) {
