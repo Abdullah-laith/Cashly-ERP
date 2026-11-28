@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Search, ChevronLeft, ChevronRight, Download, Eye, FileText, Printer } from 'lucide-react';
+import { Trash2, Search, ChevronLeft, ChevronRight, Download, Eye, FileText, Printer, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast-provider';
@@ -13,6 +13,8 @@ import { useOrganization } from '@/components/organization-provider';
 import { printInvoicePDF, printReportPDF, type InvoiceData, type ReportData } from '@/lib/print-engine';
 import { PeriodNavigator, createPeriodSelection, periodRange, type PeriodSelection } from '@/components/ui/PeriodNavigator';
 import { formatBaghdadDateTime } from '@/lib/date-format';
+import { EmptyState, TableSkeleton } from '@/components/ui/EmptyState';
+import { shareInvoiceViaWhatsApp } from '@/lib/whatsapp-invoice';
 
 interface Product {
   name: string;
@@ -25,6 +27,7 @@ interface Invoice {
   customer_name: string;
   customer_phone: string | null;
   total_amount: number;
+  remaining_debt?: number | null;
   created_at: string;
   deleted_at: string | null;
   payment_type: 'نقدي' | 'آجل';
@@ -35,6 +38,8 @@ interface Invoice {
   discount_amount?: number | null;
   discount_mode?: 'amount' | 'percent' | null;
   shipping_amount?: number | null;
+  status?: 'paid' | 'returned' | string | null;
+  warehouse_id?: string | null;
 }
 
 export default function SalesHistoryPage() {
@@ -44,6 +49,8 @@ export default function SalesHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmReturn, setConfirmReturn] = useState<string | null>(null);
+  const [returning, setReturning] = useState(false);
   const [periodSelection, setPeriodSelection] = useState<PeriodSelection>(() => createPeriodSelection());
 
   useEffect(() => {
@@ -69,6 +76,18 @@ export default function SalesHistoryPage() {
   useEffect(() => {
     void fetchInvoices();
   }, [periodSelection]);
+
+  const returnInvoice = async (id: string) => {
+    setReturning(true);
+    const { error } = await supabase.rpc('return_invoice', { invoice_id_param: id });
+    if (error) showToast(`فشل إرجاع الفاتورة: ${error.message}`);
+    else {
+      showToast('تم إرجاع الفاتورة إلى المخزن وتحديث الدين');
+      setInvoices(prev => prev.map(invoice => invoice.id === id ? { ...invoice, status: 'returned', remaining_debt: 0 } : invoice));
+      setConfirmReturn(null);
+    }
+    setReturning(false);
+  };
 
   const deleteInvoice = async (id: string) => {
     try {
@@ -135,11 +154,11 @@ export default function SalesHistoryPage() {
   };
 
   const exportToPDF = async () => {
-    const total = filteredInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount || 0), 0);
+    const total = filteredInvoices.filter(invoice => invoice.status !== 'returned').reduce((sum, invoice) => sum + Number(invoice.total_amount || 0), 0);
     const report: ReportData = {
       title: 'تقرير المبيعات', period: periodSelection.mode === 'all' ? 'كل الفترات' : periodSelection.mode === 'daily' ? periodSelection.date : periodSelection.mode === 'monthly' ? periodSelection.month : periodSelection.mode === 'yearly' ? String(periodSelection.year) : `${periodSelection.startDate} — ${periodSelection.endDate}`, organization,
       columns: [{ label: 'التاريخ', key: 'date' }, { label: 'العميل', key: 'customer' }, { label: 'الإجمالي', key: 'total', align: 'left' }],
-      rows: filteredInvoices.map(invoice => ({ date: new Date(invoice.created_at).toLocaleDateString('en-US'), customer: invoice.customer_name || '-', total: `${Number(invoice.total_amount || 0).toLocaleString('en-US')} د.ع` })),
+      rows: filteredInvoices.filter(invoice => invoice.status !== 'returned').map(invoice => ({ date: new Date(invoice.created_at).toLocaleDateString('en-US'), customer: invoice.customer_name || '-', total: `${Number(invoice.total_amount || 0).toLocaleString('en-US')} د.ع` })),
       totalLabel: 'المجموع الكلي', totalValue: `${total.toLocaleString('en-US')} د.ع`,
     };
     await printReportPDF(report);
@@ -167,9 +186,11 @@ export default function SalesHistoryPage() {
       <Card className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xl">
         <CardContent className="p-0">
           {loading ? (
-            <p className="text-center py-10 text-slate-500">جاري التحميل...</p>
+            <TableSkeleton />
+          ) : filteredInvoices.length === 0 ? (
+            <EmptyState title="لا توجد مبيعات بعد" description="ستظهر الفواتير هنا بعد إتمام أول عملية بيع." actionLabel="إنشاء أول فاتورة" onAction={() => { window.location.href = '/dashboard/invoicing'; }} />
           ) : (
-            <Table className="table-fixed w-full">
+            <div className="overflow-x-auto"><Table className="min-w-[760px] table-fixed w-full">
               <TableHeader>
                 <TableRow className="border-slate-200/80 hover:bg-transparent">
                   <TableHead className="text-right px-4 py-3.5 text-slate-500">التاريخ</TableHead>
@@ -193,22 +214,30 @@ export default function SalesHistoryPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right px-4 py-3.5 text-slate-500">{inv.customer_phone || '-'}</TableCell>
-                    <TableCell className="text-right px-4 py-3.5 font-bold text-[#10B981]">{Number(inv.total_amount).toLocaleString()} د.ع</TableCell>
-                    <TableCell className="text-right px-4 py-3.5 flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => printSingleInvoice(inv)} className="text-blue-400" title="طباعة الفاتورة">
-                        <Printer className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(inv.id)} className="text-red-400 hover:text-red-700">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+                    <TableCell className={`text-right px-4 py-3.5 font-bold ${inv.status === 'returned' ? 'text-slate-400 line-through' : 'text-[#10B981]'}`}>{Number(inv.total_amount).toLocaleString()} د.ع {inv.status === 'returned' && <Badge className="mr-2 bg-red-50 text-red-700">مرتجع</Badge>}</TableCell>
+                    <TableCell className="text-right px-4 py-3.5"><div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => printSingleInvoice(inv)} className="text-blue-400" title="طباعة الفاتورة"><Printer className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={async () => { const lines = await loadInvoiceLines(inv); shareInvoiceViaWhatsApp({ invoiceNumber: inv.invoice_number || inv.id.slice(0, 8), createdAt: inv.created_at, customerName: inv.customer_name || 'عميل نقدي', customerPhone: inv.customer_phone || undefined, customerType: inv.customer_type || 'in_store', paymentType: inv.payment_type === 'آجل' ? 'credit' : 'cash', lines: lines.length ? lines : (inv.items || []).map(item => ({ name: item.name, qty: Number(item.quantity || 0), price: Number(item.price || 0) })), subtotal: Number(inv.subtotal_amount ?? inv.total_amount ?? 0), discount: Number(inv.discount_amount || 0), discountMode: inv.discount_mode || 'amount', shipping: Number(inv.shipping_amount || 0), total: Number(inv.total_amount || 0), currency: 'IQD' }, organization); }} className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" title="إرسال واتساب">إرسال واتساب</Button>
+                      {inv.status !== 'returned' && <Button variant="ghost" size="sm" onClick={() => setConfirmReturn(inv.id)} className="text-rose-600" title="إرجاع الفاتورة"><RotateCcw className="w-4 h-4" /></Button>}
+                      <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(inv.id)} className="text-red-400 hover:text-red-700"><Trash2 className="w-4 h-4" /></Button>
+                    </div></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </Table></div>
           )}
         </CardContent>
       </Card>
+
+      {confirmReturn && (
+        <div className="fixed inset-0 bg-slate-500/20 flex items-center justify-center z-50 p-4">
+          <Card className="bg-white border-slate-200/80 p-6 w-full max-w-md shadow-2xl">
+            <h3 className="font-bold text-lg mb-2">تأكيد إرجاع الفاتورة</h3>
+            <p className="text-slate-500 mb-6">سيُعاد المخزون إلى المخزن الأصلي ويُخصم الدين المرتبط بهذه الفاتورة.</p>
+            <div className="flex gap-3 justify-end"><Button variant="ghost" onClick={() => setConfirmReturn(null)}>إلغاء</Button><Button disabled={returning} className="bg-rose-600 text-white hover:bg-rose-700" onClick={() => void returnInvoice(confirmReturn)}>{returning ? 'جارٍ الإرجاع...' : 'تأكيد الإرجاع'}</Button></div>
+          </Card>
+        </div>
+      )}
 
       {confirmDelete && (
         <div className="fixed inset-0 bg-slate-500/20 flex items-center justify-center z-50">

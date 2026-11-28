@@ -4,6 +4,7 @@ import { getCustomers, type Customer } from '@/lib/customers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { MapPin, Plus, Trash2, UsersRound } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
@@ -50,10 +51,10 @@ export default function CustomersPage() {
       <div className="customers-summary"><div><UsersRound /><span><strong>{customers.length}</strong> عميل مسجل</span></div><div><MapPin /><span>بحث سريع بالاسم أو الهاتف أو المحافظة</span></div></div>
       <div className="customers-toolbar"><div className="customers-search-wrap"><span>⌕</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث باسم العميل أو الهاتف أو المحافظة..." /></div><span className="customers-result-count">{visibleCustomers.length} نتيجة</span></div>
       {error && <p className="customers-error">{error}</p>}
-      <div className="customers-table-shell"><Table>
+      {visibleCustomers.length === 0 ? <EmptyState title="لا يوجد عملاء بعد" description="أضف بيانات زبائنك لتظهر بسرعة عند إصدار الفواتير." actionLabel="إضافة أول عميل" onAction={() => router.push('/dashboard/customers/new')} /> : <div className="customers-table-shell overflow-x-auto"><Table>
         <TableHeader><TableRow><TableHead className="customer-col-name">الاسم</TableHead><TableHead className="customer-col-phone">رقم الهاتف</TableHead><TableHead className="customer-col-governorate">المحافظة</TableHead><TableHead className="customer-col-channel">نوع الزبون</TableHead><TableHead className="customer-col-balance">الرصيد</TableHead><TableHead className="customer-col-actions">الإجراءات</TableHead></TableRow></TableHeader>
         <TableBody>{visibleCustomers.map((c) => <TableRow key={c.id}><TableCell className="customer-name-cell"><button type="button" className="customer-name-link" onClick={() => router.push(`/dashboard/customers/${c.id}`)}>{c.name}</button></TableCell><TableCell>{c.phone || '—'}</TableCell><TableCell>{c.governorate || '—'}</TableCell><TableCell><span className={`customer-channel-badge ${c.customer_type === 'online' ? 'is-online' : 'is-store'}`}>{c.customer_type === 'online' ? 'أونلاين' : 'زيارة للمحل'}</span></TableCell><TableCell className={(c.balance ?? 0) < 0 ? 'text-red-500' : 'text-emerald-500'}>{(c.balance ?? 0).toLocaleString('ar-IQ')} د.ع</TableCell><TableCell><div className="customer-actions"><Button variant="ghost" size="sm" aria-label={`حذف ${c.name}`} onClick={() => removeCustomer(c.id)}><Trash2 className="w-4 h-4 text-red-500" /></Button></div></TableCell></TableRow>)}</TableBody>
-      </Table></div>
+      </Table></div>}
     </div>
   );
 }
