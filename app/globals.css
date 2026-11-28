@@ -1205,6 +1205,13 @@ html, body, .dashboard-shell, .workspace, .dashboard-main, .dashboard-content { 
 .dashboard-content .period-switch button.is-selected { color: #FFFFFF !important; background: linear-gradient(135deg,#F97316,#F59E0B) !important; }
 .dashboard-content .quick-action-inline { color: #0F172A !important; }
 .dashboard-content .quick-action-inline:hover { background: #FFF7ED !important; border-color: #FDBA74 !important; color: #C2410C !important; }
+.card-3d { position: relative; isolation: isolate; overflow: hidden; border-bottom: 2px solid rgba(226,232,240,.9); box-shadow: 0 4px 16px -4px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.9); animation: dashboard-fade-up .5s ease-out both; }
+.card-3d::after { content: ''; position: absolute; inset: 0 auto 0 -55%; z-index: -1; width: 42%; pointer-events: none; background: linear-gradient(105deg, transparent, rgba(255,255,255,.52), transparent); transform: skewX(-18deg); transition: transform .7s ease; }
+.card-3d:hover::after { transform: translateX(360%) skewX(-18deg); }
+.chart-live-badge { display: inline-flex; align-items: center; gap: .45rem; border: 1px solid rgba(167,243,208,.8); border-radius: 999px; padding: .125rem .625rem; color: #047857; background: #ECFDF5; font-size: .72rem; font-weight: 700; }
+.donut-wrap { filter: drop-shadow(0 8px 10px rgba(15,23,42,.08)); }
+.payment-legend-row .legend-dot { display: inline-block; width: .55rem; height: .55rem; border-radius: 999px; }
+@keyframes dashboard-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .dashboard-content .text-slate-300, .dashboard-content .text-slate-400, .dashboard-content .text-slate-500, .topbar .text-slate-400 { color: #475569 !important; }
 .dashboard-content .chart-gridline { stroke: #E2E8F0 !important; }
 .dashboard-content .chart-axis-label { fill: #64748B !important; }

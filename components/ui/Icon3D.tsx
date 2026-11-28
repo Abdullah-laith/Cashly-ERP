@@ -17,14 +17,15 @@ const toneClasses: Record<Icon3DTone, string> = {
 export function Icon3D({ icon: Icon, tone = 'orange', size = 'md', className }: { icon: LucideIcon; tone?: Icon3DTone; size?: 'sm' | 'md' | 'lg'; className?: string }) {
   return (
     <span className={cn(
-      'nav-icon inline-grid shrink-0 place-items-center rounded-xl text-white',
+      'icon-3d relative inline-grid shrink-0 place-items-center rounded-xl border-b-2 border-black/15 text-white transition-all duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-lg group-active:scale-95',
       size === 'sm' && 'h-8 w-8',
       size === 'md' && 'h-10 w-10',
       size === 'lg' && 'h-12 w-12',
       toneClasses[tone],
       className,
     )}>
-      <Icon className={cn(size === 'sm' ? 'h-4 w-4' : size === 'lg' ? 'h-6 w-6' : 'h-5 w-5')} />
+      <span aria-hidden="true" className="pointer-events-none absolute inset-x-1 top-0.5 h-1/3 rounded-t-[inherit] bg-gradient-to-b from-white/55 to-transparent" />
+      <Icon className={cn('relative z-[1]', size === 'sm' ? 'h-4 w-4' : size === 'lg' ? 'h-6 w-6' : 'h-5 w-5')} />
     </span>
   );
 }
