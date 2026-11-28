@@ -108,10 +108,11 @@ export default function InvoicingPage() {
   const addProduct = (product: Product) => {
     const line = cart.find(item => item.id === product.id);
     const available = availableQuantity(product);
-    if (available <= 0) return toast.error('هذا المنتج نافد من المخزون');
-    if (line && line.qty >= available) return toast.error('لا يمكن تجاوز الكمية المتوفرة');
+    if (available <= 0) { soundEngine.playError(); return toast.error('هذا المنتج نافد من المخزون'); }
+    if (line && line.qty >= available) { soundEngine.playError(); return toast.error('لا يمكن تجاوز الكمية المتوفرة'); }
     const price = Number(priceMode === 'wholesale' ? product.wholesale_price || product.sell_price || 0 : product.sell_price || 0);
     setCart(line ? cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item) : [...cart, { ...product, qty: 1, price }]);
+    soundEngine.playAddCart();
   };
   const updateQty = (id: string, nextQty: number) => {
     const line = cart.find(item => item.id === id);
@@ -119,10 +120,12 @@ export default function InvoicingPage() {
     const available = availableQuantity(line);
     const requested = Math.max(1, Math.floor(Number.isFinite(nextQty) ? nextQty : 1));
     if (requested > available) {
+      soundEngine.playError();
       toast.error(`الكمية المطلوبة غير متوفرة، المتبقي في المخزن: ${available}`);
       return;
     }
     setCart(cart.map(item => item.id === id ? { ...item, qty: requested } : item));
+    soundEngine.playToggle();
   };
   const changeQty = (id: string, delta: number) => {
     const line = cart.find(item => item.id === id);
@@ -134,6 +137,7 @@ export default function InvoicingPage() {
     if (!customer.name.trim()) return toast.error('اكتب اسم الزبون أولاً');
     const { data, error } = await supabase.from('customers').insert([{ ...customer, customer_type: customerType }]).select().single();
     if (error) return toast.error(`تعذر حفظ الزبون: ${error.message}`);
+    soundEngine.playSave();
     setCustomers([...(customers || []), data]);
     setSelectedCustomer(data);
     setCustomerQuery(data.name);
@@ -187,11 +191,12 @@ export default function InvoicingPage() {
         total,
         currency: 'IQD',
       };
-      soundEngine.playSuccess();
+      soundEngine.playSaleSuccess();
       toast.success('تم حفظ البيع وتحديث المخزون');
       setPostSaleInvoice(invoiceForPrint);
       if (print) {
         setShowPostSaleModal(false);
+        soundEngine.playPrint();
         void printInvoicePDF(invoiceForPrint, organization);
       } else {
         setShowPostSaleModal(true);
@@ -243,14 +248,14 @@ export default function InvoicingPage() {
           <div className="grid grid-cols-2 gap-2"><Input placeholder="اسم الزبون" value={customer.name} onChange={e => setCustomer({ ...customer, name: e.target.value })} className="bg-white border-slate-200/80" /><Input placeholder="رقم الهاتف" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })} className="bg-white border-slate-200/80" /><Input placeholder="المحافظة / المنطقة" value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} className="col-span-2 bg-white border-slate-200/80" /></div>
           <div className="text-xs text-slate-500">نوع الزبون<div className="mt-1 flex rounded-lg border border-slate-200/80 bg-white p-1"><button type="button" onClick={() => setCustomerType('in_store')} className={`flex-1 rounded py-1.5 ${customerType === 'in_store' ? 'bg-orange-500 text-white' : ''}`}>زيارة للمحل</button><button type="button" onClick={() => setCustomerType('online')} className={`flex-1 rounded py-1.5 ${customerType === 'online' ? 'bg-orange-500 text-white' : ''}`}>أونلاين</button></div></div>
           {!selectedCustomer && customer.name && <button onClick={saveCustomer} className="text-xs text-cyan-400 flex items-center gap-1"><UserPlus className="w-4" /> حفظ كزبون جديد</button>}
-          <div className="min-h-24 max-h-56 overflow-y-auto space-y-2 border-y border-slate-200/80 py-3">{cart.length === 0 && <div className="text-center text-sm text-slate-500 py-8">السلة فارغة</div>}{cart.map(line => <div key={line.id} className="bg-white rounded-lg p-2 space-y-2"><div className="flex justify-between gap-2 text-sm"><span className="truncate">{line.name}</span><button onClick={() => setCart(cart.filter(x => x.id !== line.id))}><Trash2 className="w-4 text-red-400" /></button></div><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-1"><button onClick={() => changeQty(line.id, -1)} className="p-1 bg-slate-50 rounded"><Minus className="w-3" /></button><Input type="number" min="1" max={availableQuantity(line)} value={line.qty} onChange={e => updateQty(line.id, Number(e.target.value))} className="h-7 w-14 bg-white border-slate-200/80 text-center text-xs" /><button onClick={() => changeQty(line.id, 1)} className="p-1 bg-slate-50 rounded"><Plus className="w-3" /></button></div><Input type="number" value={line.price} onChange={e => updatePrice(line.id, Number(e.target.value))} className="h-7 w-24 bg-white border-slate-200/80 text-xs" /><span className="text-xs font-bold">{money(line.price * line.qty)}</span></div></div>)}</div>
+          <div className="min-h-24 max-h-56 overflow-y-auto space-y-2 border-y border-slate-200/80 py-3">{cart.length === 0 && <div className="text-center text-sm text-slate-500 py-8">السلة فارغة</div>}{cart.map(line => <div key={line.id} className="bg-white rounded-lg p-2 space-y-2"><div className="flex justify-between gap-2 text-sm"><span className="truncate">{line.name}</span><button data-sound="custom" onClick={() => { soundEngine.playDelete(); setCart(cart.filter(x => x.id !== line.id)); }}><Trash2 className="w-4 text-red-400" /></button></div><div className="flex items-center justify-between gap-2"><div className="flex items-center gap-1"><button data-sound="custom" onClick={() => { soundEngine.playDelete(); changeQty(line.id, -1); }} className="p-1 bg-slate-50 rounded"><Minus className="w-3" /></button><Input type="number" min="1" max={availableQuantity(line)} value={line.qty} onChange={e => updateQty(line.id, Number(e.target.value))} className="h-7 w-14 bg-white border-slate-200/80 text-center text-xs" /><button data-sound="custom" onClick={() => { soundEngine.playAddCart(); changeQty(line.id, 1); }} className="p-1 bg-slate-50 rounded"><Plus className="w-3" /></button></div><Input type="number" value={line.price} onChange={e => updatePrice(line.id, Number(e.target.value))} className="h-7 w-24 bg-white border-slate-200/80 text-xs" /><span className="text-xs font-bold">{money(line.price * line.qty)}</span></div></div>)}</div>
           <div className="space-y-2 text-sm"><div className="flex justify-between"><span>المجموع الفرعي</span><b>{money(subtotal)}</b></div><div className="flex items-center gap-2"><span>الخصم</span><div className="flex rounded border border-slate-200/80 p-0.5"><button type="button" onClick={() => setDiscountMode('amount')} className={`px-2 py-1 text-xs rounded ${discountMode === 'amount' ? 'bg-orange-500 text-white' : ''}`}>د.ع</button><button type="button" onClick={() => setDiscountMode('percent')} className={`px-2 py-1 text-xs rounded ${discountMode === 'percent' ? 'bg-orange-500 text-white' : ''}`}>%</button></div><Input type="number" min="0" max={discountMode === 'percent' ? 100 : subtotal} value={discount} onChange={e => setDiscount(Math.min(discountMode === 'percent' ? 100 : subtotal, Math.max(0, Number(e.target.value))))} className="h-8 flex-1 bg-white border-slate-200/80" /></div>{discountMode === 'percent' && <p className="text-xs text-orange-600">قيمة الخصم: {money(discountValue)}</p>}<div className="flex items-center justify-between gap-2"><span>التوصيل</span><Input type="number" value={shipping} onChange={e => setShipping(Number(e.target.value))} className="h-8 w-28 bg-white border-slate-200/80" /></div><div className="flex justify-between text-lg font-bold border-t border-slate-200/80 pt-2"><span>الإجمالي</span><span className="text-emerald-400">{money(total)}</span></div></div>
           <div className="grid grid-cols-2 gap-2 text-xs">{([['cash', 'نقدي'], ['credit', 'آجل / دين']] as const).map(([key, label]) => <button key={key} onClick={() => setPayment(key)} className={`py-2 rounded border ${payment === key ? 'border-orange-500 bg-orange-500 text-white' : 'border-slate-200/80 text-slate-500'}`}>{label}</button>)}</div>
           {payment !== 'cash' && <div className="flex items-center gap-2 text-sm"><span>المبلغ المدفوع</span><Input type="number" value={received} onChange={e => setReceived(Number(e.target.value))} className="h-8 bg-white border-slate-200/80" /></div>}
           {payment !== 'cash' && <div className="text-xs text-amber-400">{due > 0 ? `المتبقي دين: ${money(due)}` : `الباقي للزبون: ${money(change)}`}</div>}
           <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="ملاحظات الفاتورة" className="w-full min-h-16 bg-white border border-slate-200/80 rounded-lg p-2 text-sm resize-none" />
           <div className="grid grid-cols-2 gap-2 print:hidden"><button disabled={saving} onClick={() => saveInvoice(false)} className="col-span-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 py-3 font-bold disabled:opacity-50">{saving ? 'جار الحفظ...' : 'إتمام البيع وحفظ'}</button><button disabled={saving} onClick={() => saveInvoice(true)} className="rounded-lg border border-slate-200/80 py-2 flex items-center justify-center gap-1"><Printer className="w-4" /> حفظ وطباعة</button><button onClick={suspendInvoice} className="rounded-lg border border-slate-200/80 py-2 flex items-center justify-center gap-1"><ClipboardList className="w-4" /> تعليق الفاتورة</button></div>
-          {showPostSaleModal && postSaleInvoice && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 print:hidden"><div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl" dir="rtl"><CheckCircle2 className="mx-auto mb-3 h-14 w-14 text-emerald-500" /><h2 className="text-xl font-bold">تم إتمام البيع وحفظ الفاتورة بنجاح</h2><p className="mt-2 text-sm text-slate-500">رقم الفاتورة: <strong>{postSaleInvoice.invoiceNumber}</strong></p><p className="text-lg font-bold text-orange-600">{money(postSaleInvoice.total)}</p><p className="mt-4 font-semibold">هل تريد طباعة الفاتورة؟</p><div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2"><button type="button" onClick={() => { setShowPostSaleModal(false); if (postSaleInvoice) void printInvoicePDF(postSaleInvoice, organization); }} className="rounded-lg bg-orange-500 px-4 py-3 font-bold text-white">نعم، طباعة الفاتورة (PDF)</button><button type="button" onClick={() => { if (postSaleInvoice) shareInvoiceViaWhatsApp(postSaleInvoice, organization); }} className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 font-bold text-emerald-700 hover:bg-emerald-100">إرسال واتساب</button><button type="button" onClick={() => { setShowPostSaleModal(false); setPostSaleInvoice(null); }} className="rounded-lg border border-slate-200 px-4 py-3 font-bold text-slate-700">لا، بيع جديد</button></div></div></div>}
+          {showPostSaleModal && postSaleInvoice && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 print:hidden"><div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl" dir="rtl"><CheckCircle2 className="mx-auto mb-3 h-14 w-14 text-emerald-500" /><h2 className="text-xl font-bold">تم إتمام البيع وحفظ الفاتورة بنجاح</h2><p className="mt-2 text-sm text-slate-500">رقم الفاتورة: <strong>{postSaleInvoice.invoiceNumber}</strong></p><p className="text-lg font-bold text-orange-600">{money(postSaleInvoice.total)}</p><p className="mt-4 font-semibold">هل تريد طباعة الفاتورة؟</p><div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2"><button type="button" data-sound="custom" onClick={() => { setShowPostSaleModal(false); soundEngine.playPrint(); if (postSaleInvoice) void printInvoicePDF(postSaleInvoice, organization); }} className="rounded-lg bg-orange-500 px-4 py-3 font-bold text-white">نعم، طباعة الفاتورة (PDF)</button><button type="button" data-sound="custom" onClick={() => { soundEngine.playPrint(); if (postSaleInvoice) shareInvoiceViaWhatsApp(postSaleInvoice, organization); }} className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 font-bold text-emerald-700 hover:bg-emerald-100">إرسال واتساب</button><button type="button" onClick={() => { setShowPostSaleModal(false); setPostSaleInvoice(null); }} className="rounded-lg border border-slate-200 px-4 py-3 font-bold text-slate-700">لا، بيع جديد</button></div></div></div>}
           {suspended.length > 0 && <div className="print:hidden"><p className="text-xs text-slate-500 mb-1">فواتير معلقة</p>{suspended.map((item, index) => <button key={item.invoiceNumber} onClick={() => { setCart(item.cart); setCustomer(item.customer); setPayment(item.payment); setSuspended(suspended.filter((_, i) => i !== index)); }} className="text-xs text-cyan-400 ml-2">{item.invoiceNumber}</button>)}</div>}
         </aside>
       </div>

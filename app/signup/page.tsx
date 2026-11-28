@@ -27,15 +27,15 @@ export default function SignupPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault(); soundEngine.playTap();
     setTouched({ firstName: true, lastName: true, email: true, phone: true, password: true, confirmPassword: true, terms: true });
-    if (Object.values(errors).some(Boolean)) return;
+    if (Object.values(errors).some(Boolean)) { soundEngine.playError(); return; }
     setLoading(true); setMessage(null);
     const { data, error } = await supabase.auth.signUp({ email: form.email.trim(), password: form.password, options: { data: { first_name: form.firstName.trim(), last_name: form.lastName.trim(), full_name: `${form.firstName.trim()} ${form.lastName.trim()}`, phone: form.phone.trim() } } });
-    if (error || !data.user) { setMessage({ type: 'error', text: error?.message || 'تعذر إنشاء الحساب، حاول مرة أخرى' }); setLoading(false); return; }
-    if (!data.user.identities?.length) { setMessage({ type: 'error', text: 'هذا البريد مستخدم مسبقاً. سجّل الدخول أو استخدم نسيت كلمة المرور.' }); setLoading(false); return; }
+    if (error || !data.user) { soundEngine.playError(); setMessage({ type: 'error', text: error?.message || 'تعذر إنشاء الحساب، حاول مرة أخرى' }); setLoading(false); return; }
+    if (!data.user.identities?.length) { soundEngine.playError(); setMessage({ type: 'error', text: 'هذا البريد مستخدم مسبقاً. سجّل الدخول أو استخدم نسيت كلمة المرور.' }); setLoading(false); return; }
     const trialStartsAt = new Date().toISOString();
     const { error: settingsError } = await supabase.from('organization_settings').insert({ user_id: data.user.id, default_currency: form.currency, onboarding_completed: false, trial_starts_at: trialStartsAt, trial_ends_at: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), subscription_status: 'trial' });
-    if (settingsError) { setMessage({ type: 'error', text: `تم إنشاء الحساب، لكن تعذر تجهيز المشروع: ${settingsError.message}` }); setLoading(false); return; }
-    if (!data.session) { setMessage({ type: 'error', text: 'تم إنشاء الحساب لكن لم تبدأ جلسة الدخول. عطّل تأكيد البريد من إعدادات Supabase ثم حاول مرة أخرى.' }); setLoading(false); return; }
+    if (settingsError) { soundEngine.playError(); setMessage({ type: 'error', text: `تم إنشاء الحساب، لكن تعذر تجهيز المشروع: ${settingsError.message}` }); setLoading(false); return; }
+    if (!data.session) { soundEngine.playError(); setMessage({ type: 'error', text: 'تم إنشاء الحساب لكن لم تبدأ جلسة الدخول. عطّل تأكيد البريد من إعدادات Supabase ثم حاول مرة أخرى.' }); setLoading(false); return; }
     soundEngine.playSuccess(); setMessage({ type: 'success', text: 'تم إنشاء حسابك. نجهّز مساحة مشروعك الآن...' }); window.location.href = '/onboarding';
   }
   const fieldError = (field: keyof typeof errors) => touched[field] ? errors[field] : '';

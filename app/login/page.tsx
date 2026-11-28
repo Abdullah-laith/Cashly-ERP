@@ -32,6 +32,7 @@ export default function LoginPage() {
     setMessage(null);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      soundEngine.playError();
       const text = error.message.toLowerCase().includes('invalid login credentials') ? 'البريد أو كلمة المرور غير صحيحة.' : 'تعذر تسجيل الدخول. حاول مرة أخرى.';
       setMessage({ type: 'error', text });
       setLoading(false);

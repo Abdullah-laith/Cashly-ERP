@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-engine';
 
 type Product = { id: string; name: string; serial_number: string | null; sell_price: number | null; quantity: number | null; cost_price: number | null };
 type Warehouse = { id: string; name: string; is_default: boolean };
@@ -68,6 +69,7 @@ export default function ProductsPage() {
       if (stockError) throw stockError;
       const { error: syncError } = await supabase.rpc('sync_product_total', { product_id_param: productId });
       if (syncError) throw syncError;
+      soundEngine.playSave();
       setForm(emptyForm); setEditingId(null); setShowForm(false); await load(); setMessage({ type: 'success', text: editingId ? 'تم تعديل المنتج بنجاح' : 'تمت إضافة المنتج بنجاح' });
     } catch (error) {
       setMessage({ type: 'error', text: error instanceof Error ? error.message : 'تعذر حفظ المنتج' });
@@ -77,7 +79,8 @@ export default function ProductsPage() {
   const remove = async (id: string) => {
     if (!window.confirm('هل أنت متأكد من حذف المنتج؟')) return;
     const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) { setMessage({ type: 'error', text: error.message }); return; }
+    if (error) { soundEngine.playError(); setMessage({ type: 'error', text: error.message }); return; }
+    soundEngine.playDelete();
     setProducts((current) => current.filter((product) => product.id !== id));
     setMessage({ type: 'success', text: 'تم حذف المنتج' });
   };

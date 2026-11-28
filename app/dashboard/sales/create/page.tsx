@@ -68,7 +68,7 @@ export default function POSPage() {
       });
       if (invoiceError) throw invoiceError;
 
-      soundEngine.playSuccess();
+      soundEngine.playSaleSuccess();
       toast.success('تم إتمام البيع بنجاح');
       setCart([]);
     } catch (e: any) {

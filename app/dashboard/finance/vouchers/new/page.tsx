@@ -19,7 +19,7 @@ export default function AddVoucherPage({ type }: { type: 'expense' | 'receipt' }
     setLoading(true);
     try {
       // Logic for adding voucher
-      soundEngine.playSuccess();
+      soundEngine.playSave();
       toast.success('تم حفظ السند بنجاح');
     } catch (error) {
       soundEngine.playError();

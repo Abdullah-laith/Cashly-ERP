@@ -138,6 +138,7 @@ export default function DashboardPage() {
 
   const printDashboardInvoice = async (invoice: Invoice) => {
     const invoiceForPrint: InvoiceData = { invoiceNumber: invoice.invoice_number || invoice.id?.slice(0, 8) || '—', createdAt: invoice.created_at, customerName: invoice.customer_name || 'عميل نقدي', customerPhone: undefined, customerType: 'in_store', paymentType: invoice.payment_type === 'credit' || invoice.payment_type === 'آجل' ? 'credit' : 'cash', lines: [], subtotal: Number(invoice.total_amount || 0), discount: 0, discountMode: 'amount', shipping: 0, total: Number(invoice.total_amount || 0), currency: 'IQD' };
+    soundEngine.playPrint();
     await printInvoicePDF(invoiceForPrint, organization);
   };
 

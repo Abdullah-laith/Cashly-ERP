@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { addCustomer } from '@/lib/customers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { soundEngine } from '@/lib/sound-engine';
 
 export default function NewCustomerPage() {
   const router = useRouter();
@@ -18,9 +19,11 @@ export default function NewCustomerPage() {
     try {
       const createdCustomer = await addCustomer(form);
       if (!createdCustomer?.id) throw new Error('تعذر تأكيد حفظ العميل');
+      soundEngine.playSave();
       router.push('/dashboard/customers');
       router.refresh();
     } catch (err: unknown) {
+      soundEngine.playError();
       setError(err instanceof Error ? err.message : 'تعذر حفظ العميل');
     } finally {
       setSaving(false);

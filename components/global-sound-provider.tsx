@@ -12,6 +12,7 @@ export default function GlobalSoundProvider({ children }: { children: React.Reac
       const target = event.target as HTMLElement | null;
       const interactive = target?.closest('button, a, [role="button"]');
       if (!interactive || (interactive as HTMLButtonElement).disabled) return;
+      if (interactive.getAttribute('data-sound') === 'custom' || soundEngine.isCustomSoundRecent()) return;
       const now = Date.now();
       if (now - lastInteraction.current < 45) return;
       lastInteraction.current = now;
